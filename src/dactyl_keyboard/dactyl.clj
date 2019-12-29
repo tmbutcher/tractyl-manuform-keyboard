@@ -12,11 +12,11 @@
 ;; Shape parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def nrows 5)
-(def ncols 6)
+(def nrows 4)
+(def ncols 5)
 
-(def α (/ π 12))                        ; curvature of the columns
-(def β (/ π 36))                        ; curvature of the rows
+(def α (/ π 5))                        ; curvature of the columns
+(def β (/ π 26))                        ; curvature of the rows
 (def centerrow (- nrows 3))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
 (def tenting-angle (/ π 12))            ; or, change this for more precise tenting control
@@ -53,7 +53,7 @@
 
 ; If you use Cherry MX or Gateron switches, this can be turned on.
 ; If you use other switches such as Kailh, you should set this as false
-(def create-side-nubs? true)
+(def create-side-nubs? false)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; General variables ;;
