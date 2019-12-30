@@ -15,24 +15,25 @@
 (def nrows 4)
 (def ncols 5)
 
-(def α (/ π 5))                        ; curvature of the columns
+(def α (/ π 10))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
-(def centerrow (- nrows 3))             ; controls front-back tilt
+(def centerrow (- nrows 2.5))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
-(def tenting-angle (/ π 12))            ; or, change this for more precise tenting control
+(def tenting-angle (deg2rad 20))            ; or, change this for more precise tenting control
 (def column-style
   (if (> nrows 5) :orthographic :standard))  ; options include :standard, :orthographic, and :fixed
 ; (def column-style :fixed)
-(def pinky-15u true)
+(def pinky-15u false)
 
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
-                               (>= column 4) [0 -12 5.64]            ; original [0 -5.8 5.64]
-                               :else [0 0 0]))
+                               (= column 3) [0 -5 0]
+                               (>= column 4) [0 -26 5.64]            ; original [0 -5.8 5.64]
+                               :else [0 0 2]))
 
-(def thumb-offsets [6 -3 7])
+(def thumb-offsets [6 0 10])
 
-(def keyboard-z-offset 9)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+(def keyboard-z-offset 16)              ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5
@@ -120,17 +121,9 @@
 (def sa-double-length 37.5)
 (def sa-cap {1 (let [bl2 (/ 18.5 2)
                      m (/ 17 2)
-                     key-cap (hull (->> (polygon [[bl2 bl2] [bl2 (- bl2)] [(- bl2) (- bl2)] [(- bl2) bl2]])
-                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                        (translate [0 0 0.05]))
-                                   (->> (polygon [[m m] [m (- m)] [(- m) (- m)] [(- m) m]])
-                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                        (translate [0 0 6]))
-                                   (->> (polygon [[6 6] [6 -6] [-6 -6] [-6 6]])
-                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                        (translate [0 0 12])))]
+                     key-cap (cube 18.25 18.25 2)]
                  (->> key-cap
-                      (translate [0 0 (+ 5 plate-thickness)])
+                      (translate [0 0 (+ 4 plate-thickness)])
                       (color [220/255 163/255 163/255 1])))
              2 (let [bl2 sa-length
                      bw2 (/ 18.25 2)
@@ -315,16 +308,16 @@
 ;;;;;;;;;;;;
 
 (def thumborigin
-  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) 0])
+  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) -7])
        thumb-offsets))
 
 (defn thumb-tr-place [shape]
   (->> shape
        (rotate (deg2rad  14) [1 0 0])
-       (rotate (deg2rad -15) [0 1 0])
+       (rotate (deg2rad 0) [0 1 0])
        (rotate (deg2rad  10) [0 0 1]) ; original 10
        (translate thumborigin)
-       (translate [-15 -10 5]))) ; original 1.5u  (translate [-12 -16 3])
+       (translate [-15 -10 2]))) ; original 1.5u  (translate [-12 -16 3])
 (defn thumb-tl-place [shape]
   (->> shape
        (rotate (deg2rad  10) [1 0 0])
@@ -464,6 +457,68 @@
     (key-place 3 lastrow web-post-tr)
     (key-place 4 cornerrow web-post-bl))))
 
+;;;;;;;;;;
+;; Hand ;;
+;;;;;;;;;;
+
+(defn finger [one two three finger-radius]
+      (let
+        [
+         three-cyl-height (- three finger-radius)
+         height-loss (* finger-radius (Math/sin 15))
+         ]
+      (union
+        ;; First joint to second joint
+        (translate [0 0 (/ one 2)]
+                   (cylinder finger-radius one))
+        (translate [0 0 one]
+                   (rotate (deg2rad 15) [1 0 0]
+                           (union
+                             ;; Second joint to third
+                             (translate [0 0 (/ two 2)]
+                                        (cylinder finger-radius two))
+                             ;; Third to end
+                             (translate [0 (* -1 (- three-cyl-height height-loss) (Math/cos (deg2rad 75))) (+ two (/ three-cyl-height 2))]
+                                        (rotate (deg2rad 15) [1 0 0]
+                                                (union
+                                                  (cylinder finger-radius three-cyl-height)
+                                                  ;; Make the fingertip round
+                                                  (translate [0 0 (/ three-cyl-height 2)] (sphere finger-radius))))))
+                           )
+                   )
+        )
+      )
+      )
+
+(def fingers
+  ;; Move over by half the width of index finger to half index finger at 0 on x
+  (translate [10.5 0 0]
+             (union
+               ;; Index
+               (finger 47 22 20 10.5)
+               ;; Middle
+               (translate [25.5 0 0] (finger 53.5 29 22 9.2))
+               ;; Ring
+               (translate [(+ 20 25.5) 0 0] (finger 44 28.5 23 8.25))
+               ;; Pinky
+               (translate [(+ 20 25.5 22) 0 0] (finger 30 22.5 20 8.25))))
+  )
+
+(def palm
+  (translate [42.5 0 -35] (union
+                            (cube 85 30 70)
+                            (rotate (deg2rad 33) [1 0 0]
+                                    (translate [(+ (/ -10.5 2) (/ -85 2)) -25 25]
+                                               (cylinder 10.5 113)
+                                               )
+                                    )
+                            )))
+
+(def hand
+  (union
+    fingers
+    (rotate (deg2rad -45) [1 0 0] palm)
+    ))
 ;;;;;;;;;;
 ;; Case ;;
 ;;;;;;;;;;
@@ -650,12 +705,12 @@
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
   (union (screw-insert 0 0         bottom-radius top-radius height [11 10 0])
-         (screw-insert 0 lastrow   bottom-radius top-radius height [0 0 0])
+         (screw-insert 0 lastrow   bottom-radius top-radius height [-16 -5 0])
         ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
         ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
-         (screw-insert lastcol lastrow  bottom-radius top-radius height [0 12 0])
-         (screw-insert lastcol 0         bottom-radius top-radius height [0 7 0])
-         (screw-insert 1 lastrow         bottom-radius top-radius height [0 -16 0])))
+         (screw-insert lastcol lastrow  bottom-radius top-radius height [-6 13 0])
+         (screw-insert lastcol 0         bottom-radius top-radius height [-2 6 0])
+         (screw-insert 1 lastrow         bottom-radius top-radius height [-4 -14 0])))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -724,6 +779,17 @@
       (write-scad
        (difference
         (union
+          (translate [-25 -66 73]
+                     (rotate (deg2rad -20) [1 0 0]
+                             (rotate tenting-angle [0 1 0]
+                                     (rotate
+                                       (deg2rad -90) [1 0 0]
+                                       (mirror [0 1 0] hand)
+                                       )
+                                     )
+                             )
+                     )
+
          key-holes
          pinky-connectors
          pinky-walls
@@ -734,7 +800,7 @@
          thumbcaps
          caps)
 
-        (translate [0 0 -20] (cube 350 350 40)))))
+        (translate [0 0 -23] (cube 350 350 40)))))
 
 (spit "things/right-plate.scad"
       (write-scad
@@ -748,5 +814,8 @@
 (spit "things/test.scad"
       (write-scad
        (difference trrs-holder trrs-holder-hole)))
+
+(spit "things/hand.scad"
+      (write-scad hand))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
