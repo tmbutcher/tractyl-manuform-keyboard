@@ -15,7 +15,7 @@
 (def nrows 4)
 (def ncols 5)
 
-(def α (/ π 10))                        ; curvature of the columns
+(def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
 (def centerrow (- nrows 2.5))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
@@ -27,13 +27,13 @@
 
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
-                               (= column 3) [0 -5 0]
-                               (>= column 4) [0 -28 3.64]            ; original [0 -5.8 5.64]
+                               (= column 3) [0 -8 -4]
+                               (>= column 4) [0 -31 1.00]            ; original [0 -5.8 5.64]
                                :else [0 -5 1.5]))
 
 (def thumb-offsets [6 0 10])
 
-(def keyboard-z-offset 15)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+(def keyboard-z-offset 17)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5
@@ -308,7 +308,7 @@
 ;;;;;;;;;;;;
 
 (def thumborigin
-  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) -7])
+  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) -9])
        thumb-offsets))
 
 (defn thumb-tr-place [shape]
@@ -505,8 +505,8 @@
   )
 
 (def palm
-  (translate [42.5 0 -35] (union
-                            (cube 85 30 70)
+  (translate [42.5 0 -40] (union
+                            (cube 85 30 80)
                             (rotate (deg2rad 33) [1 0 0]
                                     (translate [(+ (/ -10.5 2) (/ -85 2)) -25 25]
                                                (cylinder 10.5 113)
@@ -644,7 +644,7 @@
 
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
 
-(def usb-holder-position (map + [17 19.3 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
+(def usb-holder-position (map + [20 18 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
 (def usb-holder-cube   (cube 15 12 2))
 (def usb-holder-space  (translate (map + usb-holder-position [0 (* -1 wall-thickness) 1]) usb-holder-cube))
 (def usb-holder-holder (translate usb-holder-position (cube 19 12 4)))
@@ -704,8 +704,8 @@
                 (translate (map + offset [(first position) (second position) (/ height 2)])))))
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
-      (union (screw-insert 0 0         bottom-radius top-radius height [11 10 0])
-             (screw-insert 0 lastrow   bottom-radius top-radius height [-9 -4.5 0])
+      (union (screw-insert 0 0         bottom-radius top-radius height [8 7 0])
+             (screw-insert 0 lastrow   bottom-radius top-radius height [-11 -4.5 0])
              ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
              (screw-insert lastcol lastrow  bottom-radius top-radius height [-6 13 0])
@@ -750,6 +750,26 @@
     (key-wall-brace lastcol cornerrow 0 -1 web-post-br lastcol cornerrow 0 -1 wide-post-br)
     (key-wall-brace lastcol 0 0 1 web-post-tr lastcol 0 0 1 wide-post-tr)))
 
+(def tent-origin
+  (map + (left-key-position cornerrow -1) [-7 5 -36]) )
+(def tent-insert
+                                       (rotate (deg2rad -90) [0 1 0]
+                                               (translate [-55 0 0]
+                                                          (import "/Users/nprince/apps/dactyl-manuform-mini-keyboard/src/dactyl_keyboard/Insert.stl")
+                                                          )
+                                               )
+
+  )
+
+(def tent-2-translate [5 50 0])
+(def tent-cutout (rotate (deg2rad 90) [0 1 0] (cylinder 2 5)))
+(def tent-cutout1 (translate tent-origin tent-cutout))
+(def tent-cutout2 (translate tent-2-translate (translate tent-origin (rotate (deg2rad -13) [0 0 1] tent-cutout))))
+(def tent-insert1 (translate tent-origin tent-insert))
+
+(def tent-insert2
+  (translate tent-2-translate (translate tent-origin (rotate (deg2rad -13) [0 0 1] tent-insert)))
+  )
 (def model-right (difference
                    (union
                      key-holes
@@ -758,7 +778,16 @@
                      connectors
                      thumb
                      thumb-connectors
-                     (difference (union case-walls
+                     tent-insert1
+                     tent-insert2
+                     (difference (union
+                                   (difference
+                                     case-walls
+                                     (union
+                                             tent-cutout2
+                                             tent-cutout1
+                                             )
+                                     )
                                         screw-insert-outers
                                         pro-micro-holder
                                         usb-holder-holder
@@ -779,7 +808,7 @@
       (write-scad
         (difference
           (union
-            (translate [-25 -66 77]
+            (translate [-25 -66 79]
                        (rotate (deg2rad -20) [1 0 0]
                                (rotate tenting-angle [0 1 0]
                                        (rotate
@@ -815,7 +844,8 @@
       (write-scad
         (difference trrs-holder trrs-holder-hole)))
 
+
 (spit "things/hand.scad"
-      (write-scad hand))
+      (write-scad tent-insert))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
