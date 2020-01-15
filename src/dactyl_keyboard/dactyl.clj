@@ -645,11 +645,11 @@
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
 
 (def usb-holder-position (map + [20 18 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-cube   (cube 40 12 3))
-(def usb-holder-space  (translate (map + usb-holder-position [0 (* -1 wall-thickness) 1]) usb-holder-cube))
+(def usb-holder-cube   (cube 40 12 2))
+(def usb-holder-space  (translate (map + usb-holder-position [0 (* -1 wall-thickness) 2]) usb-holder-cube))
 (def usb-holder-holder (translate usb-holder-position (cube 29 12 4)))
 
-(def usb-jack (translate (map + usb-holder-position [5 10 3]) (cube 8.1 20 3.1)))
+(def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
 
 (def pro-micro-position (map + (key-position 0 1 (wall-locate3 -1 0)) [-6 2 -15]))
 (def pro-micro-space-size [4 10 12]) ; z has no wall;
@@ -664,7 +664,7 @@
          (translate [(first pro-micro-position) (second pro-micro-position) (last pro-micro-position)]))
     pro-micro-space))
 
-(def trrs-holder-size [6.2 10 2]) ; trrs jack PJ-320A
+(def trrs-holder-size [6.2 10 3]) ; trrs jack PJ-320A
 (def trrs-holder-hole-size [6.2 10 6]) ; trrs jack PJ-320A
 (def trrs-holder-position  (map + usb-holder-position [-13.6 0 0]))
 (def trrs-holder-thickness 2)
@@ -680,7 +680,7 @@
     (->>
       (->> (binding [*fn* 30] (cylinder 3.75 20))) ; 5mm trrs jack
       (rotate (deg2rad  90) [1 0 0])
-      (translate [(first trrs-holder-position) (+ (second trrs-holder-position) (/ (+ (second trrs-holder-size) trrs-holder-thickness) 2)) (+ 3 (/ (+ (last trrs-holder-size) trrs-holder-thickness) 1.5))])) ;1.5 padding
+      (translate [(first trrs-holder-position) (+ (second trrs-holder-position) (/ (+ (second trrs-holder-size) trrs-holder-thickness) 2)) (+ 3 (/ (+ (last trrs-holder-size) trrs-holder-thickness) 0.9))])) ;1.5 padding
 
     ; rectangular trrs holder
     (->> (apply cube trrs-holder-hole-size) (translate [(first trrs-holder-position) (+ (/ trrs-holder-thickness -2) (second trrs-holder-position)) (+ (/ (last trrs-holder-hole-size) 2) trrs-holder-thickness)]))))
@@ -716,9 +716,17 @@
 (def screw-insert-height 4)
 
 ; Hole Diameter C: 4.1-4.4
-(def screw-insert-bottom-radius (/ 4.4 2))
-(def screw-insert-top-radius (/ 4.4 2))
+(def screw-insert-bottom-radius (/ 4.3 2))
+(def screw-insert-top-radius (/ 4.3 2))
 (def screw-insert-holes  (screw-insert-all-shapes screw-insert-bottom-radius screw-insert-top-radius screw-insert-height))
+
+(spit "things/screw-test.scad"
+      (write-scad
+       (difference
+        (screw-insert 0 0 (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5) [0 0 0])
+        (screw-insert 0 0 screw-insert-bottom-radius screw-insert-top-radius screw-insert-height [0 0 0])
+         )
+       ))
 
 ; Wall Thickness W:\t1.65
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5)))
@@ -751,8 +759,9 @@
     (key-wall-brace lastcol 0 0 1 web-post-tr lastcol 0 0 1 wide-post-tr)))
 
 (def tent-insert-origin
-  (map + (left-key-position cornerrow -1) [-7 7 -36]) )
+  (map + (left-key-position cornerrow -1) [-6 7 -36]) )
 
+(def tent-insert-back-origin (map + thumborigin [-12 -44.6 -22]))
 (def tent-insert-cutout
   (translate [-2 -4.85 -4.85] (cube 2 9.7 9.7 :center false))
   )
@@ -760,6 +769,8 @@
 (def tent-cutout-left-translate [5 48 0])
 
 (def tent-cutout-left-rotate -20)
+(def tent-cutout-back-rotate 116)
+
 (def tent-insert-cutout-left
   (translate tent-cutout-left-translate
              (translate tent-insert-origin
@@ -767,12 +778,13 @@
   )
 
 (def tent-screw-cutout (rotate (deg2rad 90) [0 1 0] (cylinder 1.8 20)))
-(def tent-screw-cutout-right (translate tent-insert-origin tent-screw-cutout))
+(def tent-screw-cutout-back (translate tent-insert-back-origin (rotate (deg2rad tent-cutout-back-rotate) [0 0 1] tent-screw-cutout)))
 (def tent-screw-cutout-left
   (translate tent-cutout-left-translate
              (translate tent-insert-origin
                         (rotate (deg2rad tent-cutout-left-rotate) [0 0 1] tent-screw-cutout))))
-(def tent-insert-cutout-right (translate tent-insert-origin tent-insert-cutout))
+(def tent-insert-cutout-back (translate tent-insert-back-origin
+                                        (rotate (deg2rad tent-cutout-back-rotate) [0 0 1] tent-insert-cutout)))
 
 (def model-right
   (difference
@@ -797,16 +809,53 @@
 (def model-right-with-tent
   (union
    (difference
-    model-right
+     model-right
                      (union
                       tent-screw-cutout-left
-                      tent-screw-cutout-right
-                      tent-insert-cutout-right
+                      tent-screw-cutout-back
                       tent-insert-cutout-left
-                       )
+                      tent-insert-cutout-back
+                      )
                      )
    ))
-(spit "things/right.scad" (write-scad model-right-with-tent))
+
+(def touchpad-length 35)
+(def touchpad-width 28.5)
+(def touchpad (
+                difference
+                (cube (+ touchpad-length 2) (+ touchpad-width 2) 5)
+                (translate [0 0 3] (cube touchpad-length touchpad-width 5))
+
+                ))
+(def touchpad-origin (map + thumborigin [4 -34 1]))
+
+(defn rotate-touchpad [touchpad]
+  (rotate (deg2rad 15) [1 0 0]
+          (rotate (deg2rad 15) [0 0 1] touchpad)
+          )
+  )
+
+(def touchpad-clearance
+  (translate [0 0 10]
+             (translate touchpad-origin
+                        (rotate-touchpad
+                         (cube (+ touchpad-length 2) (+ touchpad-width 2) 20))
+                        )
+             )
+
+  )
+
+(def model-right-with-mouse
+  (union
+   (translate touchpad-origin (rotate-touchpad touchpad))
+   (difference
+    model-right-with-tent
+    touchpad-clearance
+
+    )
+    )
+  )
+(spit "things/right.scad" (write-scad model-right-with-mouse))
 
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right-with-tent)))
@@ -868,11 +917,12 @@
                   tent-actual
                   (translate [0.25 0 0] ribs)
                   ))
-;; Note to self: move the insert near the thumb cluster towards the center a bit.
+;; Note to self: move the insert near the thumb cluster towards the center a bit. (done-ish)
 ;; Shorten the bracket arm
-;; Deepen the bracket wells
-;; Thicken the pro micro platform
-;; Raise the trrs hole
+;; Deepen the bracket wells (done)
+;; Thicken the pro micro platform (done)
+;; Raise the trrs hole (done)
+;; Fix screw insert, seems to be m2.5 (done)
 (def bracket-rib (translate [0.25 0 3] (cube 0.7 1.3 3)))
 (defn rotated_bracket_rib [angle]
   (rotate (deg2rad angle) [1 0 0] bracket-rib)
@@ -888,6 +938,9 @@
 (def bracket (union
                bracket-arm
               top-bracket))
+
+(spit "things/touchpad.scad"
+      (write-scad touchpad))
 
 (spit "things/insert.scad"
       (write-scad
