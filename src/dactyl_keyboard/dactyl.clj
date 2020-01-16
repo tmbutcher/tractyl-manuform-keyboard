@@ -17,7 +17,7 @@
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
-(def centerrow (- nrows 2.5))             ; controls front-back tilt
+(def centerrow (- nrows 3))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
 (def tenting-angle (deg2rad 20))            ; or, change this for more precise tenting control
 (def column-style
@@ -27,8 +27,8 @@
 
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
-                               (= column 3) [0 -8 -4]
-                               (>= column 4) [0 -29.5 -0.50]            ; original [0 -5.8 5.64]
+                               (= column 3) [0 -6 -4]
+                               (>= column 4) [0 -19.5 -0.50]            ; original [0 -5.8 5.64]
                                :else [0 -5 1.5]))
 
 (def thumb-offsets [6 0 10])
@@ -308,46 +308,46 @@
 ;;;;;;;;;;;;
 
 (def thumborigin
-  (map + (key-position 1 cornerrow [(/ mount-width 2) (- (/ mount-height 2)) -9])
+  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 13) (+ (- (/ mount-height 2)) 3) 0])
        thumb-offsets))
 
 (defn thumb-tr-place [shape]
       (->> shape
            (rotate (deg2rad  14) [1 0 0])
-           (rotate (deg2rad -10) [0 1 0])
+           (rotate (deg2rad -20) [0 1 0])
            (rotate (deg2rad  17) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-18 -12 5.5]))) ; original 1.5u  (translate [-12 -16 3])
+           (translate [-16 -12 5.5]))) ; original 1.5u  (translate [-12 -16 3])
 (defn thumb-tl-place [shape]
       (->> shape
            (rotate (deg2rad  10) [1 0 0])
-           (rotate (deg2rad -40) [0 1 0])
+           (rotate (deg2rad -50) [0 1 0])
            (rotate (deg2rad  25) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-33 -16 -2]))) ; original 1.5u (translate [-32 -15 -2])))
+           (translate [-33 -16 -5]))) ; original 1.5u (translate [-32 -15 -2])))
 
 
 (defn thumb-mr-place [shape]
       (->> shape
            (rotate (deg2rad  10) [1 0 0])
-           (rotate (deg2rad -40) [0 1 0])
+           (rotate (deg2rad -50) [0 1 0])
            (rotate (deg2rad  25) [0 0 1])
            (translate thumborigin)
-           (translate [-21 -34 -6])))
+           (translate [-21 -34 -8])))
 (defn thumb-br-place [shape]
       (->> shape
            (rotate (deg2rad   6) [1 0 0])
            (rotate (deg2rad -45) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
-           (translate [-34 -41 -19])))
+           (translate [-34 -41 -24])))
 (defn thumb-bl-place [shape]
       (->> shape
            (rotate (deg2rad   6) [1 0 0])
            (rotate (deg2rad -45) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
-           (translate [-46 -23 -16.5]))) ;        (translate [-51 -25 -12])))
+           (translate [-46 -23 -21.5]))) ;        (translate [-51 -25 -12])))
 
 
 (defn thumb-1x-layout [shape]
@@ -507,9 +507,9 @@
 (def palm
   (translate [42.5 0 -40] (union
                             (cube 85 30 80)
-                            (rotate (deg2rad 33) [1 0 0]
-                                    (translate [(+ (/ -10.5 2) (/ -85 2)) -25 25]
-                                               (cylinder 10.5 113)
+                            (rotate (deg2rad 25) [1 0 0]
+                                    (translate [(+ 0 (/ -85 2)) -25 25]
+                                               (cylinder 10.5 100)
                                                )
                                     )
                             )))
@@ -759,16 +759,16 @@
     (key-wall-brace lastcol 0 0 1 web-post-tr lastcol 0 0 1 wide-post-tr)))
 
 (def tent-insert-origin
-  (map + (left-key-position cornerrow -1) [-6 7 -36]) )
+  (map + (left-key-position cornerrow -1) [-12.5 7 -36]) )
 
-(def tent-insert-back-origin (map + thumborigin [-12 -44.6 -22]))
+(def tent-insert-back-origin (map + thumborigin [-12 -44.6 -27]))
 (def tent-insert-cutout
   (translate [-2 -4.85 -4.85] (cube 2 9.7 9.7 :center false))
   )
 
-(def tent-cutout-left-translate [5 48 0])
+(def tent-cutout-left-translate [5 48 -3])
 
-(def tent-cutout-left-rotate -20)
+(def tent-cutout-left-rotate -12)
 (def tent-cutout-back-rotate 116)
 
 (def tent-insert-cutout-left
@@ -797,9 +797,10 @@
                      thumb-connectors
                      (difference (union
                                      case-walls
-                                        screw-insert-outers
+;                                        screw-insert-outers
                                         usb-holder-holder
-                                        trrs-holder)
+                                        trrs-holder
+                                  )
                                  usb-holder-space
                                  usb-jack
                                  trrs-holder-hole
@@ -823,23 +824,26 @@
 (def touchpad-width 28.5)
 (def touchpad (
                 difference
-                (cube (+ touchpad-length 2) (+ touchpad-width 2) 5)
-                (translate [0 0 3] (cube touchpad-length touchpad-width 5))
+                (cube (+ touchpad-length 2) (+ touchpad-width 2) 7)
+                (translate [0 0 3] (cube touchpad-length touchpad-width 7))
 
                 ))
-(def touchpad-origin (map + thumborigin [4 -34 1]))
+(def touchpad-origin (map + thumborigin [-14 -36 -7]))
 
 (defn rotate-touchpad [touchpad]
-  (rotate (deg2rad 15) [1 0 0]
-          (rotate (deg2rad 15) [0 0 1] touchpad)
+  (rotate (deg2rad 19) [1 0 0]
+          (rotate (deg2rad 23) [0 0 1]
+                  (rotate (deg2rad -35) [0 1 0] touchpad)))
           )
-  )
 
 (def touchpad-clearance
-  (translate [0 0 10]
+  (translate [0 0 0]
              (translate touchpad-origin
                         (rotate-touchpad
-                         (cube (+ touchpad-length 2) (+ touchpad-width 2) 20))
+                         (translate [0 0 10]
+                                    (cube (+ touchpad-length 2) (+ touchpad-width 2) 20))
+                                    )
+
                         )
              )
 
@@ -864,13 +868,15 @@
       (write-scad
         (difference
           (union
-            (translate [-25 -66 79]
-                       (rotate (deg2rad -20) [1 0 0]
-                               (rotate tenting-angle [0 1 0]
-                                       (rotate
-                                         (deg2rad -90) [1 0 0]
-                                         (mirror [0 1 0] hand)
-                                         )
+            (translate [-15 -76 85]
+                       (rotate (deg2rad -25) [1 0 0]
+                               (rotate (deg2rad 7) [0 0 1]
+                                       (rotate tenting-angle [0 1 0]
+                                               (rotate
+                                                (deg2rad -90) [1 0 0]
+                                                (mirror [0 1 0] hand)
+                                                )
+                                               )
                                        )
                                )
                        )
