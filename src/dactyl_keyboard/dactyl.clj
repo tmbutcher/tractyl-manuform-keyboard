@@ -822,7 +822,7 @@
 
 
 (def start-of-touchpad-cutout 15)
-(def touchpad-cutout-width 4.5)
+(def touchpad-wire-diameter 4.5)
 (def touchpad-length 35)
 (def touchpad-width 28.5)
 (def touchpad (
@@ -832,7 +832,7 @@
                 (union
                  (translate [0 0 3] (cube touchpad-length touchpad-width 8))
                  ;; wire cutout
-                 (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-cutout-width 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-cutout-width touchpad-cutout-width 7))
+                 (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-wire-diameter 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-wire-diameter touchpad-wire-diameter 7))
                   )
                 ))
 (def touchpad-origin (map + thumborigin [-13 -33 -7.5]))
@@ -958,6 +958,24 @@
 
 (spit "things/touchpad.scad"
       (write-scad touchpad))
+
+(def touchpad-wire-radius (/ touchpad-wire-diameter 2))
+(def holder-thickness (+ (* 2 screw-insert-bottom-radius) 2))
+(def outer-holder-x-thickness (+ touchpad-wire-diameter (* 2 holder-thickness)))
+(def outer-holder-y-thickness (+ touchpad-wire-diameter holder-thickness -2))
+(def holder-screw-hole (rotate (deg2rad 90) [1 0 0]
+                               (cylinder [screw-insert-bottom-radius screw-insert-top-radius] (+ screw-insert-height 1)))
+  )
+(def wire-holder
+                   (difference
+                    (cube  outer-holder-x-thickness outer-holder-y-thickness holder-thickness)
+                    (translate [0 (/ touchpad-wire-diameter 2) 0] (cube touchpad-wire-diameter touchpad-wire-diameter (+ holder-thickness 1)))
+                    (translate [(+ (/ touchpad-wire-diameter 2) (/ holder-thickness 2)) (- (/ outer-holder-y-thickness 2) (/ screw-insert-height 2)) 0]
+                               holder-screw-hole
+                    )
+                   ))
+
+(spit "things/wire-holder.scad" (write-scad wire-holder))
 
 (spit "things/insert.scad"
       (write-scad
