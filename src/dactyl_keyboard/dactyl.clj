@@ -729,8 +729,9 @@
        ))
 
 ; Wall Thickness W:\t1.65
+(def screw-insert-case-radius 1.5)
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5)))
-(def screw-insert-screw-holes  (screw-insert-all-shapes 1.7 1.7 350))
+(def screw-insert-screw-holes  (screw-insert-all-shapes screw-insert-case-radius screw-insert-case-radius 350))
 
 (def pinky-connectors
   (apply union
@@ -856,6 +857,31 @@
 
   )
 
+(def wire-holder-screw-hole  (
+                               rotate (deg2rad 90) [1 0 0] (cylinder [screw-insert-case-radius screw-insert-case-radius] 10))
+  )
+(def wire-holder-screw-holes (
+                               union
+                               (translate [6 0 -25]
+                                          (translate (key-position 3 4 [0 0 0]) wire-holder-screw-hole)
+                                          )
+                               (translate [3 15 -35]
+                                          (translate (key-position 4 4 [0 0 0]) wire-holder-screw-hole)
+                                          )
+                               (translate [7 26.5 -37.5]
+                                          (translate (key-position 4 4 [0 0 0])
+                                                             (rotate (deg2rad 90) [0 0 1]
+                                                             wire-holder-screw-hole)
+                                                  )
+                                          )
+                               (translate [12 37 1]
+                                          (translate (key-position 4 1 [0 0 0])
+                                                     (rotate (deg2rad 145) [0 0 1]
+                                                             wire-holder-screw-hole)
+                                                     )
+                                          )
+                               )
+  )
 (def model-right-with-mouse
   (union
    (difference
@@ -865,10 +891,14 @@
    (difference
     model-right-with-tent
     touchpad-clearance
-    )
-    )
+    ))
   )
-(spit "things/right.scad" (write-scad model-right-with-mouse))
+
+(def model-right-with-wire-management (difference
+                                        model-right-with-mouse
+                                        wire-holder-screw-holes
+                                        ))
+(spit "things/right.scad" (write-scad model-right-with-wire-management))
 
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right-with-tent)))
