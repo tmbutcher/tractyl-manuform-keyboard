@@ -307,20 +307,24 @@
 ;; Thumbs ;;
 ;;;;;;;;;;;;
 
+;(def thumborigin
+;  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 20) (+ (- (/ mount-height 3)) 3) 5])
+;       thumb-offsets))
+
 (def thumborigin
-  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 20) (+ (- (/ mount-height 3)) 3) 5])
+  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 25) (+ (- (/ mount-height 3)) 0) 8])
        thumb-offsets))
 
 (defn thumb-tr-place [shape]
       (->> shape
-           (rotate (deg2rad  10) [1 0 0])
-           (rotate (deg2rad -32) [0 1 0])
+           (rotate (deg2rad  -1) [1 0 0])
+           (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  17) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-21 -12 4.5]))) ; original 1.5u  (translate [-12 -16 3])
+           (translate [-26 -15 10]))) ; original 1.5u  (translate [-12 -16 3])
 (defn thumb-tl-place [shape]
       (->> shape
-           (rotate (deg2rad  6) [1 0 0])
+           (rotate (deg2rad  -5) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  22) [0 0 1]) ; original 10
            (translate thumborigin)
@@ -329,21 +333,21 @@
 
 (defn thumb-mr-place [shape]
       (->> shape
-           (rotate (deg2rad  6) [1 0 0])
+           (rotate (deg2rad  -5) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1])
            (translate thumborigin)
-           (translate [-21 -34 -8])))
+           (translate [-23 -34 -3.5])))
 (defn thumb-br-place [shape]
       (->> shape
-           (rotate (deg2rad   2) [1 0 0])
+           (rotate (deg2rad   -9) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
-           (translate [-31 -41 -26])))
+           (translate [-33 -41 -23])))
 (defn thumb-bl-place [shape]
       (->> shape
-           (rotate (deg2rad   2) [1 0 0])
+           (rotate (deg2rad   -9) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  32) [0 0 1])
            (translate thumborigin)
@@ -507,8 +511,8 @@
 (def palm
   (translate [42.5 0 -40] (union
                             (cube 85 30 80)
-                            (rotate (deg2rad 25) [1 0 0]
-                                    (translate [(+ 0 (/ -85 2)) -25 25]
+                            (rotate (deg2rad 32.5) [1 0 0]
+                                    (translate [(+ 7 (/ -85 2)) -25 25]
                                                (cylinder 10.5 100)
                                                )
                                     )
@@ -678,7 +682,7 @@
 
     ; circle trrs hole
     (->>
-      (->> (binding [*fn* 30] (cylinder 3.75 20))) ; 5mm trrs jack
+      (->> (binding [*fn* 30] (cylinder 3.3 20))) ; 5mm trrs jack
       (rotate (deg2rad  90) [1 0 0])
       (translate [(first trrs-holder-position) (+ (second trrs-holder-position) (/ (+ (second trrs-holder-size) trrs-holder-thickness) 2)) (+ 3 (/ (+ (last trrs-holder-size) trrs-holder-thickness) 0.9))])) ;1.5 padding
 
@@ -716,8 +720,8 @@
 (def screw-insert-height 4)
 
 ; Hole Diameter C: 4.1-4.4
-(def screw-insert-bottom-radius (/ 4.1 2))
-(def screw-insert-top-radius (/ 4 2))
+(def screw-insert-bottom-radius (/ 4.0 2))
+(def screw-insert-top-radius (/ 3.9 2))
 (def screw-insert-holes  (screw-insert-all-shapes screw-insert-bottom-radius screw-insert-top-radius screw-insert-height))
 
 (spit "things/screw-test.scad"
@@ -762,7 +766,7 @@
 (def tent-insert-origin
   (map + (left-key-position cornerrow -1) [-12.5 7 -36]) )
 
-(def tent-insert-back-origin (map + thumborigin [-12 -44.6 -27]))
+(def tent-insert-back-origin (map + thumborigin [-15.4 -46.4 -27]))
 (def tent-insert-cutout
   (translate [-2 -4.85 -4.85] (cube 2 9.7 9.7 :center false))
   )
@@ -836,12 +840,12 @@
                  (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-wire-diameter 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-wire-diameter touchpad-wire-diameter 7))
                   )
                 ))
-(def touchpad-origin (map + thumborigin [-13 -35 -7.5]))
+(def touchpad-origin (map + thumborigin [-18 -37.5 -1]))
 
 (defn rotate-touchpad [touchpad]
-  (rotate (deg2rad 9) [1 0 0]
-          (rotate (deg2rad 28) [0 0 1]
-                  (rotate (deg2rad -42) [0 1 0] touchpad)))
+  (rotate (deg2rad -1) [1 0 0]
+          (rotate (deg2rad 17) [0 0 1]
+                  (rotate (deg2rad -62) [0 1 0] touchpad)))
           )
 
 (def touchpad-clearance
@@ -849,7 +853,7 @@
              (translate touchpad-origin
                         (rotate-touchpad
                          (translate [0 0 9]
-                                    (cube (+ touchpad-length 2) (+ touchpad-width 2) 20))
+                                    (cube touchpad-length touchpad-width 20))
                                     )
 
                         )
@@ -857,45 +861,42 @@
 
   )
 
-(def wire-holder-screw-hole  (
+(def touchpad-wire-ziptie (
                                union
                                (
-                                 rotate (deg2rad 90) [1 0 0] (cube 3 1 10))
+                                 rotate (deg2rad 90) [1 0 0] (cube 3.5 1.5 10))
 
   (translate [0 0 touchpad-wire-diameter]
     (
-      rotate (deg2rad 90) [1 0 0] (cube 3 1 10))
+      rotate (deg2rad 90) [1 0 0] (cube 3.5 1.5 10))
     )
 
   ))
-(def wire-holder-screw-holes (
+(def touchpad-wire-zipties (
                                union
                                (translate [6 0 -25]
-                                          (translate (key-position 3 4 [0 0 0]) wire-holder-screw-hole)
+                                          (translate (key-position 3 4 [0 0 0]) touchpad-wire-ziptie)
                                           )
                                (translate [0 15 -43]
-                                          (translate (key-position 4 4 [0 0 0]) wire-holder-screw-hole)
+                                          (translate (key-position 4 4 [0 0 0]) touchpad-wire-ziptie)
                                           )
                                (translate [7 28.5 -43]
                                           (translate (key-position 4 4 [0 0 0])
                                                              (rotate (deg2rad 90) [0 0 1]
-                                                             wire-holder-screw-hole)
+                                                                     touchpad-wire-ziptie)
                                                   )
                                           )
                                (translate [12 37 -5]
                                           (translate (key-position 4 1 [0 0 0])
                                                      (rotate (deg2rad 145) [0 0 1]
-                                                             wire-holder-screw-hole)
+                                                             touchpad-wire-ziptie)
                                                      )
                                           )
                                )
   )
 (def model-right-with-mouse
   (union
-   (difference
-    (translate touchpad-origin (rotate-touchpad touchpad))
-    tent-insert-cutout-back
-    )
+   (translate touchpad-origin (rotate-touchpad touchpad))
    (difference
     model-right-with-tent
     touchpad-clearance
@@ -904,7 +905,7 @@
 
 (def model-right-with-wire-management (difference
                                         model-right-with-mouse
-                                        wire-holder-screw-holes
+                                       touchpad-wire-zipties
                                         ))
 (spit "things/right.scad" (write-scad model-right-with-wire-management))
 
@@ -912,8 +913,8 @@
       (write-scad (mirror [-1 0 0] model-right-with-tent)))
 
 (def hand-on-test
-  (translate [-15 -76 85]
-             (rotate (deg2rad -25) [1 0 0]
+  (translate [-15 -64 92]
+             (rotate (deg2rad -32) [1 0 0]
                      (rotate (deg2rad 7) [0 0 1]
                              (rotate tenting-angle [0 1 0]
                                      (rotate
