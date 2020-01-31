@@ -307,47 +307,47 @@
 ;; Thumbs ;;
 ;;;;;;;;;;;;
 
-;(def thumborigin
-;  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 20) (+ (- (/ mount-height 3)) 3) 5])
-;       thumb-offsets))
-
 (def thumborigin
-  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 25) (+ (- (/ mount-height 3)) 0) 8])
+  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 19) (+ (- (/ mount-height 3)) -1) 5])
        thumb-offsets))
+
+;(def thumborigin
+;  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 25) (+ (- (/ mount-height 3)) 0) 8])
+;       thumb-offsets))
 
 (defn thumb-tr-place [shape]
       (->> shape
-           (rotate (deg2rad  -1) [1 0 0])
-           (rotate (deg2rad -60) [0 1 0])
+           (rotate (deg2rad  1) [1 0 0])
+           (rotate (deg2rad -45) [0 1 0])
            (rotate (deg2rad  17) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-26 -15 10]))) ; original 1.5u  (translate [-12 -16 3])
+           (translate [-22 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
 (defn thumb-tl-place [shape]
       (->> shape
-           (rotate (deg2rad  -5) [1 0 0])
+           (rotate (deg2rad  -3) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
-           (rotate (deg2rad  22) [0 0 1]) ; original 10
+           (rotate (deg2rad  25) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-35 -16 -7]))) ; original 1.5u (translate [-32 -15 -2])))
+           (translate [-33.5 -16 -5]))) ; original 1.5u (translate [-32 -15 -2])))
 
 
 (defn thumb-mr-place [shape]
       (->> shape
-           (rotate (deg2rad  -5) [1 0 0])
+           (rotate (deg2rad  -3) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1])
            (translate thumborigin)
-           (translate [-23 -34 -3.5])))
+           (translate [-23 -34 -4.5])))
 (defn thumb-br-place [shape]
       (->> shape
-           (rotate (deg2rad   -9) [1 0 0])
+           (rotate (deg2rad   -7) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
            (translate [-33 -41 -23])))
 (defn thumb-bl-place [shape]
       (->> shape
-           (rotate (deg2rad   -9) [1 0 0])
+           (rotate (deg2rad   -7) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  32) [0 0 1])
            (translate thumborigin)
@@ -620,13 +620,13 @@
     (bottom-hull
       (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
       (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
-      (thumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
-      (thumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr)))
+      (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+      (thumb-bl-place (translate (wall-locate3 -3 1) web-post-tr)))
     (hull
       (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
       (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
-      (thumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
-      (thumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
+      (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+      (thumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
       (thumb-tl-place web-post-tl))
     (hull
       (left-key-place cornerrow -1 web-post)
@@ -709,12 +709,12 @@
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
       (union (screw-insert 0 0         bottom-radius top-radius height [6 7 0])
-             (screw-insert 0 lastrow   bottom-radius top-radius height [-2 16 0])
+             (screw-insert 0 lastrow   bottom-radius top-radius height [-2 15 0])
              ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
              (screw-insert lastcol lastrow  bottom-radius top-radius height [-6 13 0])
-             (screw-insert lastcol 0         bottom-radius top-radius height [-2 4 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height [4 -15 0])))
+             (screw-insert lastcol 0         bottom-radius top-radius height [-2 2 0])
+             (screw-insert 1 lastrow         bottom-radius top-radius height [2 -18.7 0])))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -766,7 +766,7 @@
 (def tent-insert-origin
   (map + (left-key-position cornerrow -1) [-12.5 7 -36]) )
 
-(def tent-insert-back-origin (map + thumborigin [-15.4 -46.4 -27]))
+(def tent-insert-back-origin (map + thumborigin [-14.8 -46.4 -27]))
 (def tent-insert-cutout
   (translate [-2 -4.85 -4.85] (cube 2 9.7 9.7 :center false))
   )
@@ -840,12 +840,12 @@
                  (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-wire-diameter 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-wire-diameter touchpad-wire-diameter 7))
                   )
                 ))
-(def touchpad-origin (map + thumborigin [-18 -37.5 -1]))
+(def touchpad-origin (map + thumborigin [-17 -35.5 -2.3]))
 
 (defn rotate-touchpad [touchpad]
-  (rotate (deg2rad -1) [1 0 0]
-          (rotate (deg2rad 17) [0 0 1]
-                  (rotate (deg2rad -62) [0 1 0] touchpad)))
+  (rotate (deg2rad 0) [1 0 0]
+          (rotate (deg2rad 23) [0 0 1]
+                  (rotate (deg2rad -54) [0 1 0] touchpad)))
           )
 
 (def touchpad-clearance
@@ -929,7 +929,7 @@
       (write-scad
         (difference
           (union
-           hand-on-test
+;           hand-on-test
 
             key-holes
             pinky-connectors
