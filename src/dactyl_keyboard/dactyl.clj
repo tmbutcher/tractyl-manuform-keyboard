@@ -907,7 +907,7 @@
                                         model-right-with-mouse
                                        touchpad-wire-zipties
                                         ))
-(spit "things/right.scad" (write-scad model-right-with-wire-management))
+
 
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right-with-tent)))
@@ -943,14 +943,48 @@
 
           (translate [0 0 -20] (cube 350 350 40)))))
 
+(def plate2d (cut
+              (translate [0 0 -0.1]
+                         (union case-walls
+                                pinky-walls
+                                ))))
+
+(def bigplate
+  (hull
+    plate2d
+   (circle 1))
+  )
+
+(def slightly-larger (
+                       hull
+                       (resize [126 126 126] plate2d)
+                       (circle 1)
+                      ))
+(def cutout-plate
+  (color [220/255 163/255 163/255 1]
+         (difference
+          bigplate
+          plate2d
+          )
+         )
+
+  )
+
+(def bigattempt
+  (union
+    plate2d
+   (color [220/255 163/255 163/255 1] (resize [117 134 126] cutout-plate))
+   ))
+(def plate-attempt (difference
+                    (extrude-linear {:height 2}
+                    bigattempt
+                                    )
+                    (translate [0 0 -10] screw-insert-screw-holes)
+                    ))
 (spit "things/right-plate.scad"
       (write-scad
-        (cut
-          (translate [0 0 -0.1]
-                     (difference (union case-walls
-                                        pinky-walls
-                                        screw-insert-outers)
-                                 (translate [0 0 -10] screw-insert-screw-holes))))))
+       plate-attempt
+))
 
 (spit "things/test.scad"
       (write-scad
@@ -1025,5 +1059,6 @@
        bracket
        ))
 
+(spit "things/right.scad" (write-scad (mirror [1 0 0] model-right-with-tent)))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
