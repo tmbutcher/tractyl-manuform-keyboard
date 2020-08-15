@@ -308,7 +308,7 @@
 ;;;;;;;;;;;;
 
 (def thumborigin
-  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 19) (+ (- (/ mount-height 3)) -1) 5])
+  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 14) (+ (- (/ mount-height 3)) -1) 2])
        thumb-offsets))
 
 ;(def thumborigin
@@ -840,6 +840,8 @@
                  (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-wire-diameter 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-wire-diameter touchpad-wire-diameter 7))
                   )
                 ))
+(def touchpad-insert (cube (- touchpad-length 0.2) (- touchpad-width 1) 1))
+
 (def touchpad-origin (map + thumborigin [-17 -35.5 -2.3]))
 
 (defn rotate-touchpad [touchpad]
@@ -912,6 +914,9 @@
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right-with-tent)))
 
+(spit "things/touchpad-insert.scad"
+      (write-scad touchpad-insert))
+
 (def hand-on-test
   (translate [-15 -64 92]
              (rotate (deg2rad -32) [1 0 0]
@@ -929,7 +934,7 @@
       (write-scad
         (difference
           (union
-;           hand-on-test
+           hand-on-test
 
             key-holes
             pinky-connectors
@@ -983,7 +988,7 @@
                     ))
 (spit "things/right-plate.scad"
       (write-scad
-       plate-attempt
+       (mirror [1 0 0] plate-attempt)
 ))
 
 (spit "things/test.scad"
@@ -998,7 +1003,7 @@
   )
 ;; (def centered-foot (translate [25.5 5.5 7]
 ;;                           (import "/Users/nprince/apps/dactyl-manuform-mini-keyboard/src/dactyl_keyboard/Tenting_Leg.stl")))
-(def rib (translate [0 0 3.3] (cube 0.5 0.5 3)))
+(def rib (translate [0 0 3.3] (cube 1.75 0.7 2.5)))
 (defn rotated_rib [angle]
   (rotate (deg2rad angle) [1 0 0] rib)
   )
@@ -1024,11 +1029,22 @@
   bracket-ribs
                    tent-screw-cutout
   ))
-(def bracket-arm (translate [4.5 0 (+ 20 2.5)] (cube 7 7 40)))
+
+(def bracket-width 7)
+(def bracket-arm (translate [4.5 0 (+ 20 2.5)] (cube bracket-width bracket-width 40)))
 (def bracket (union
                bracket-arm
               top-bracket))
 
+(def bracket-skid (difference
+                   (translate [0, 0, 2.5] (cube 20 40 5))
+                   (translate [0 0 (+ 20 2)]
+                              (cube (+ bracket-width 0.5) (+ 4 bracket-width) 40)
+                              )
+                   )
+  )
+
+(spit "things/bracket-skid.scad" (write-scad bracket-skid))
 (spit "things/touchpad.scad"
       (write-scad touchpad))
 
@@ -1048,6 +1064,91 @@
                     )
                    ))
 
+
+(def dowel-depth-in-shell 1.8)
+(def bearing-protrude (- 3 dowel-depth-in-shell)) ; Radius of the baring minus how deep it's going into the shell
+(def trackball-width 34)
+(def trackball-width-plus-bearing (+ bearing-protrude trackball-width))
+(def holder-thickness 4)
+(def outer-width (+ (* 2 holder-thickness) trackball-width-plus-bearing))
+
+(def dowell-width 3)
+(def dowel-top-change 0)
+(def dowel-top-height 1.5)
+(def dowell-height 6.2) ; Dowel height is actually 6mm. But attempting to get it to "snap" in place
+(def dowell (union (cylinder (- (/ dowell-width 2) dowel-top-change) (+ dowell-height dowel-top-height) :fn 50) (cylinder (/ dowell-width 2) dowell-height :fn 50)))
+(def bearing (cylinder (/ 8.5 2) 3.5)) ; Bearing is actually 6mm x 2.5mm, model it as 8.5mm x 3 to give it room to spin
+(def dowell-bearing (rotate (deg2rad 90) [1 0 0] (union dowell bearing)))
+(defn rotated_dowell [angle]
+  (rotate (deg2rad angle) [0, 0, 1] (rotate (deg2rad 28) [0, 1, 0] (
+                                                                     translate [(+ (/ trackball-width-plus-bearing 2) dowel-depth-in-shell) 0 0] (union
+                                                                                                                                   ; Add a cube on the side of the dowell so there's an insertion point when we diff with the shell
+                                                                                                                                   (translate [(- (/ dowell-width 2)) 0 0] (cube (+ dowell-width 1) (- dowell-height dowel-top-change) dowell-width))
+                                                                                                                                   dowell-bearing
+                                                                                                                                   )
+                                                                     )))
+  )
+
+(def dowells (union
+              (rotated_dowell 0)
+              (rotated_dowell 120)
+              (rotated_dowell 240))
+  )
+(def vertical-hold 3) ; Millimeters of verticle hold after the curviture of the sphere ends to help hold the ball in
+(def cup (
+           difference
+           (union
+             (sphere (/ outer-width 2)) ; Main cup sphere
+             (translate [0, 0, (/ vertical-hold 2)] (cylinder (/ outer-width 2) vertical-hold)) ; add a little extra to hold ball in
+            )
+           (sphere (/ trackball-width-plus-bearing 2))
+           (translate [0, 0, (+ (/ outer-width 2) vertical-hold)] (cylinder (/ outer-width 2) outer-width)) ; cut out the upper part of the main cup spher
+           )
+  )
+
+; We know the ball will sit approx bearing-protrude over the sensor holder. Eliminate the bottom and make it square
+; up to that point with trim
+(def trim (- (+ holder-thickness bearing-protrude) 0.5))
+(def bottom-trim ; trim the bottom off of the cup to get a lower profile
+  (translate [0 0 (- (- (/ outer-width 2) (/ trim 2)))] (cube outer-width outer-width trim))
+  )
+
+(def holder-negatives (union
+                       (cube 4 6 outer-width) ; Cut a hole in the bottom
+                       dowells
+                       bottom-trim
+                       )
+                        )
+(def cup-bottom
+  (translate [0 0 (- (- (/ outer-width 2) (/ trim 2)))] (cube outer-width outer-width trim))
+  )
+(def test-holder
+  (
+                   difference
+                   cup
+                   holder-negatives
+                   )
+  )
+
+(def test-holder-with-ball (
+                             union
+                             test-holder
+                             (translate [0 0 (+ (/ holder-thickness 2) 1)] (sphere (/ trackball-width 2)))))
+
+(def trackpad-origin (map + thumborigin [-43 5 -13]))
+
+(def model-right-with-tent-and-trackball (
+                                           union
+                                           model-right-with-tent
+                                           (translate trackpad-origin
+                                                      (rotate (deg2rad 30) [1 0 0]
+                                                              (rotate (deg2rad 15) [0 1 0] test-holder-with-ball)
+                                                              )
+                                                      )
+                                           ))
+
+(spit "things/trackball-test.scad" (write-scad test-holder))
+
 (spit "things/wire-holder.scad" (write-scad wire-holder))
 
 (spit "things/insert.scad"
@@ -1059,6 +1160,7 @@
        bracket
        ))
 
-(spit "things/right.scad" (write-scad (mirror [1 0 0] model-right-with-tent)))
+
+(spit "things/right.scad" (write-scad model-right-with-tent-and-trackball))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
