@@ -1037,7 +1037,7 @@
 (def tent-foot-height 30)
 (def tent-foot-thickness 2)
 (def tent-ball-holder-thickness 4)
-(def hook-angle 65)
+(def hook-angle 40)
 
 ; Some convoluted logic to create a little hook to hold the ball in
 (def ball-hook
@@ -1045,8 +1045,8 @@
           (union
            (translate [0 (/ tent-ball-rad 2) 0]
                       (rotate (deg2rad 90) [1 0 0] (cube tent-ball-holder-thickness tent-ball-holder-thickness tent-ball-rad)))
-           (translate [(- tent-ball-rad) tent-ball-rad 0]
-                      (extrude-rotate {:angle hook-angle :convexity 10} (translate [tent-ball-rad 0]
+           (translate [(- (+ tent-ball-rad (/ tent-ball-holder-thickness 2))) tent-ball-rad 0]
+                      (extrude-rotate {:angle hook-angle :convexity 10} (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0]
                                                                                    (square tent-ball-holder-thickness tent-ball-holder-thickness)))
                       )
            )
