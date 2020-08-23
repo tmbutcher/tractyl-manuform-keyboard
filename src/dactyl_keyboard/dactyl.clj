@@ -768,34 +768,6 @@
     (key-wall-brace lastcol cornerrow 0 -1 web-post-br lastcol cornerrow 0 -1 wide-post-br)
     (key-wall-brace lastcol 0 0 1 web-post-tr lastcol 0 0 1 wide-post-tr)))
 
-(def tent-insert-origin
-  (map + (left-key-position cornerrow -1) [-12.5 7 -36]) )
-
-(def tent-insert-back-origin (map + thumborigin [-14.8 -46.4 -27]))
-(def tent-insert-cutout
-  (translate [-2 -4.85 -4.85] (cube 2 9.7 9.7 :center false))
-  )
-
-(def tent-cutout-left-translate [5 48 -3])
-
-(def tent-cutout-left-rotate -12)
-(def tent-cutout-back-rotate 116)
-
-(def tent-insert-cutout-left
-  (translate tent-cutout-left-translate
-             (translate tent-insert-origin
-                        (rotate (deg2rad tent-cutout-left-rotate) [0 0 1] tent-insert-cutout)))
-  )
-
-(def tent-screw-cutout (rotate (deg2rad 90) [0 1 0] (cylinder 1.8 20)))
-(def tent-screw-cutout-back (translate tent-insert-back-origin (rotate (deg2rad tent-cutout-back-rotate) [0 0 1] tent-screw-cutout)))
-(def tent-screw-cutout-left
-  (translate tent-cutout-left-translate
-             (translate tent-insert-origin
-                        (rotate (deg2rad tent-cutout-left-rotate) [0 0 1] tent-screw-cutout))))
-(def tent-insert-cutout-back (translate tent-insert-back-origin
-                                        (rotate (deg2rad tent-cutout-back-rotate) [0 0 1] tent-insert-cutout)))
-
 (def model-right
   (difference
    (union
@@ -817,111 +789,8 @@
                                  screw-insert-holes))
    (translate [0 0 -20] (cube 350 350 40))))
 
-(def model-right-with-tent
-  (union
-   (difference
-     model-right
-                     (union
-                      tent-screw-cutout-left
-                      tent-screw-cutout-back
-                      tent-insert-cutout-left
-                      tent-insert-cutout-back
-                      )
-                     )
-   ))
-
-
-(def start-of-touchpad-cutout 15)
-(def touchpad-wire-diameter 4.5)
-(def touchpad-length 35)
-(def touchpad-width 28.5)
-(def touchpad (
-                difference
-                (cube (+ touchpad-length 2) (+ touchpad-width 2) 8)
-
-                (union
-                 (translate [0 0 3] (cube touchpad-length touchpad-width 8))
-                 ;; wire cutout
-                 (translate [(/ touchpad-length 2) (- (+ start-of-touchpad-cutout (/ touchpad-wire-diameter 2)) (/ touchpad-width 2)) 2.5] (cube touchpad-wire-diameter touchpad-wire-diameter 7))
-                  )
-                ))
-(def touchpad-insert (cube (- touchpad-length 0.2) (- touchpad-width 1) 1))
-
-(def touchpad-origin (map + thumborigin [-17 -35.5 -2.3]))
-
-(defn rotate-touchpad [touchpad]
-  (rotate (deg2rad 0) [1 0 0]
-          (rotate (deg2rad 23) [0 0 1]
-                  (rotate (deg2rad -54) [0 1 0] touchpad)))
-          )
-
-(def touchpad-clearance
-  (translate [0 0 0]
-             (translate touchpad-origin
-                        (rotate-touchpad
-                         (translate [0 0 9]
-                                    (cube touchpad-length touchpad-width 20))
-                                    )
-
-                        )
-             )
-
-  )
-
-(def touchpad-wire-ziptie (
-                               union
-                               (
-                                 rotate (deg2rad 90) [1 0 0] (cube 3.5 1.5 10))
-
-  (translate [0 0 touchpad-wire-diameter]
-    (
-      rotate (deg2rad 90) [1 0 0] (cube 3.5 1.5 10))
-    )
-
-  ))
-(def touchpad-wire-zipties (
-                               union
-                               (translate [6 0 -25]
-                                          (translate (key-position 3 4 [0 0 0]) touchpad-wire-ziptie)
-                                          )
-                               (translate [0 15 -43]
-                                          (translate (key-position 4 4 [0 0 0]) touchpad-wire-ziptie)
-                                          )
-                               (translate [7 28.5 -43]
-                                          (translate (key-position 4 4 [0 0 0])
-                                                             (rotate (deg2rad 90) [0 0 1]
-                                                                     touchpad-wire-ziptie)
-                                                  )
-                                          )
-                               (translate [12 37 -5]
-                                          (translate (key-position 4 1 [0 0 0])
-                                                     (rotate (deg2rad 145) [0 0 1]
-                                                             touchpad-wire-ziptie)
-                                                     )
-                                          )
-                               )
-  )
-(def model-right-with-mouse
-  (union
-   (translate touchpad-origin (rotate-touchpad touchpad))
-   (difference
-    model-right-with-tent
-    touchpad-clearance
-    ))
-  )
-
-(def model-right-with-wire-management (difference
-                                        model-right-with-mouse
-                                       touchpad-wire-zipties
-                                        ))
-
-
 (spit "things/left.scad"
-      (write-scad (mirror [-1 0 0] model-right-with-tent)))
-
-(spit "things/touchpad-insert.scad"
-      (write-scad touchpad-insert))
-
+      (write-scad (mirror [-1 0 0] model-right)))
 
 
 (def plate2d (cut
@@ -964,82 +833,13 @@
                     ))
 (spit "things/right-plate.scad"
       (write-scad
-       (mirror [1 0 0] plate-attempt)
+       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       plate-attempt
 ))
 
 (spit "things/test.scad"
       (write-scad
         (difference trrs-holder trrs-holder-hole)))
-
-(def tent-actual
-  (difference
-   (translate [-2 -4.5 -4.5] (cube 2 9 9 :center false))
-   tent-screw-cutout
-   )
-  )
-;; (def centered-foot (translate [25.5 5.5 7]
-;;                           (import "/Users/nprince/apps/dactyl-manuform-mini-keyboard/src/dactyl_keyboard/Tenting_Leg.stl")))
-(def rib (translate [0 0 3.3] (cube 1.75 0.7 2.5)))
-(defn rotated_rib [angle]
-  (rotate (deg2rad angle) [1 0 0] rib)
-  )
-(def ribs (apply union (map rotated_rib (take 10 (range 0 360 36)))))
-(def tent-insert (union
-                  tent-actual
-                  (translate [0.25 0 0] ribs)
-                  ))
-;; Note to self: move the insert near the thumb cluster towards the center a bit. (done-ish)
-;; Shorten the bracket arm
-;; Deepen the bracket wells (done)
-;; Thicken the pro micro platform (done)
-;; Raise the trrs hole (done)
-;; Fix screw insert, seems to be m2.5 (done)
-(def bracket-rib (translate [0.25 0 3] (cube 0.7 1.3 3)))
-(defn rotated_bracket_rib [angle]
-  (rotate (deg2rad angle) [1 0 0] bracket-rib)
-  )
-(def bracket-ribs (apply union (map rotated_bracket_rib (take 10 (range 0 360 36)))))
-(def top-bracket (
-                   difference
-                   (translate [4 0 0] (rotate (deg2rad 90) [0 1 0] (cylinder 4.5 8)))
-  bracket-ribs
-                   tent-screw-cutout
-  ))
-
-(def bracket-width 7)
-(def bracket-arm (translate [4.5 0 (+ 20 2.5)] (cube bracket-width bracket-width 40)))
-(def bracket (union
-               bracket-arm
-              top-bracket))
-
-(def bracket-skid (difference
-                   (translate [0, 0, 2.5] (cube 20 40 5))
-                   (translate [0 0 (+ 20 2)]
-                              (cube (+ bracket-width 0.5) (+ 4 bracket-width) 40)
-                              )
-                   )
-  )
-
-(spit "things/bracket-skid.scad" (write-scad bracket-skid))
-(spit "things/touchpad.scad"
-      (write-scad touchpad))
-
-(def touchpad-wire-radius (/ touchpad-wire-diameter 2))
-(def holder-thickness (+ (* 2 screw-insert-bottom-radius) 2))
-(def outer-holder-x-thickness (+ touchpad-wire-diameter (* 2 holder-thickness)))
-(def outer-holder-y-thickness (+ touchpad-wire-diameter holder-thickness -2))
-(def holder-screw-hole (rotate (deg2rad 90) [1 0 0]
-                               (cylinder [screw-insert-bottom-radius screw-insert-top-radius] (+ screw-insert-height 1)))
-  )
-(def wire-holder
-                   (difference
-                    (cube  outer-holder-x-thickness outer-holder-y-thickness holder-thickness)
-                    (translate [0 (/ touchpad-wire-diameter 2) 0] (cube touchpad-wire-diameter touchpad-wire-diameter (+ holder-thickness 1)))
-                    (translate [(+ (/ touchpad-wire-diameter 2) (/ holder-thickness 2)) (- (/ outer-holder-y-thickness 2) (/ screw-insert-height 2)) 0]
-                               holder-screw-hole
-                    )
-                   ))
-
 
 (def dowel-depth-in-shell 1.8)
 (def bearing-protrude (- 3 dowel-depth-in-shell)) ; Radius of the baring minus how deep it's going into the shell
@@ -1190,10 +990,10 @@
    thumb-key-clearance
    ))
 
-(def model-right-with-tent-and-trackball (difference
+(def model-right-with-trackball (difference
                                           (
                                            union
-                                           model-right-with-tent
+                                           model-right
                                            trackball-mount-translated-to-model
                                            )
                                           ; Subtract out the actual trackball
@@ -1221,12 +1021,70 @@
                              )
                      )
              ))
+
+(def tent-ball-rad 5)
+(def tent-stand-rad 3)
+(def crank-rad 1.5)
+(def crank-len 20)
+(def tent-thread (call-module "thread" tent-stand-rad "15" "1.25"))
+(def tent-stand (union
+                  tent-thread
+                 (translate [0 0 -3] (sphere tent-ball-rad))
+                  ))
+
+
+(def tent-foot-width 25)
+(def tent-foot-height 30)
+(def tent-foot-thickness 2)
+(def tent-ball-holder-thickness 4)
+(def hook-angle 65)
+
+; Some convoluted logic to create a little hook to hold the ball in
+(def ball-hook
+  (rotate (deg2rad 90) [1 0 0]
+          (union
+           (translate [0 (/ tent-ball-rad 2) 0]
+                      (rotate (deg2rad 90) [1 0 0] (cube tent-ball-holder-thickness tent-ball-holder-thickness tent-ball-rad)))
+           (translate [(- tent-ball-rad) tent-ball-rad 0]
+                      (extrude-rotate {:angle hook-angle :convexity 10} (translate [tent-ball-rad 0]
+                                                                                   (square tent-ball-holder-thickness tent-ball-holder-thickness)))
+                      )
+           )
+          ))
+
+(defn rotated-ball-hook [angle]
+  (rotate (deg2rad angle) [0 0 1] (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0 (/ tent-foot-thickness 2)] ball-hook))
+  )
+
+(def tent-foot (union
+                (cube tent-foot-width tent-foot-height tent-foot-thickness)
+                (rotated-ball-hook 0)
+                (rotated-ball-hook 90)
+                (rotated-ball-hook 180)
+                (rotated-ball-hook 270)
+                 ))
+(spit "things/tent-foot.scad"
+      (write-scad tent-foot)
+      )
+(spit "things/tent-stand.scad"
+      (write-scad
+       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       tent-stand
+       )
+      )
+(spit "things/tent-all.scad" (write-scad
+                              (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                              (union
+                                tent-foot
+                               (translate [0 0 (+ 3 tent-ball-rad (/ tent-foot-thickness 2))] tent-stand)
+                                )
+                               ))
 (spit "things/right-test.scad"
       (write-scad
        (difference
         (union
          hand-on-test
-         model-right-with-tent-and-trackball
+         model-right-with-trackball
          (translate trackball-origin test-ball)
          thumbcaps
          caps)
@@ -1235,18 +1093,6 @@
 
 (spit "things/trackball-test.scad" (write-scad test-holder))
 
-(spit "things/wire-holder.scad" (write-scad wire-holder))
-
-(spit "things/insert.scad"
-      (write-scad
-       tent-insert
-       ))
-(spit "things/bracket.scad"
-      (write-scad
-       bracket
-       ))
-
-
-(spit "things/right.scad" (write-scad model-right-with-tent-and-trackball))
+(spit "things/right.scad" (write-scad model-right-with-trackball))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
