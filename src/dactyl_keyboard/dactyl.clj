@@ -14,6 +14,7 @@
 
 (def nrows 4)
 (def ncols 5)
+(def trackball-enabled true)
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
@@ -33,14 +34,14 @@
 
 (def thumb-offsets [6 0 10])
 
-(def keyboard-z-offset 17)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
+(def keyboard-z-offset 19)               ; controls overall height; original=9 with centercol=3; use 16 for centercol=2
 
 (def extra-width 2.5)                   ; extra space between the base of keys; original= 2
 (def extra-height 1.0)                  ; original= 0.5
 
 (def wall-z-offset -5)                 ; original=-15 length of the first downward-sloping part of the wall (negative)
 (def wall-xy-offset 5)                  ; offset in the x and/or y direction for the first downward-sloping part of the wall (negative)
-(def wall-thickness 2)                  ; wall thickness parameter; originally 5
+(def wall-thickness 3)                  ; wall thickness parameter; originally 5
 
 ;; Settings for column-style == :fixed
 ;; The defaults roughly match Maltron settings
@@ -73,7 +74,7 @@
 
 (def sa-profile-key-height 12.7)
 
-(def plate-thickness 2)
+(def plate-thickness 3)
 (def side-nub-thickness 4)
 (def retention-tab-thickness 1.5)
 (def retention-tab-hole-thickness (- plate-thickness retention-tab-thickness))
@@ -322,13 +323,15 @@
            (rotate (deg2rad  17) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate [-22 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
+(def thumb-tip-offset [-33.5 -16 -5])
+(def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 (defn thumb-tl-place [shape]
       (->> shape
            (rotate (deg2rad  -3) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-33.5 -16 -5]))) ; original 1.5u (translate [-32 -15 -2])))
+           (translate thumb-tip-offset))) ; original 1.5u (translate [-32 -15 -2])))
 
 
 (defn thumb-mr-place [shape]
@@ -337,21 +340,23 @@
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1])
            (translate thumborigin)
-           (translate [-23 -34 -4.5])))
+           (translate [-24.5 -36 -4.5])))
 (defn thumb-br-place [shape]
       (->> shape
            (rotate (deg2rad   -7) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
-           (translate [-33 -41 -23])))
+           (translate [-34.5 -43 -23])))
+
+(def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [-6 -2 -4.5] [0 0 0])))
 (defn thumb-bl-place [shape]
       (->> shape
            (rotate (deg2rad   -7) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  32) [0 0 1])
            (translate thumborigin)
-           (translate [-44 -23 -24]))) ;        (translate [-51 -25 -12])))
+           (translate bl-thumb-loc))) ;        (translate [-51 -25 -12])))
 
 
 (defn thumb-1x-layout [shape]
@@ -917,36 +922,7 @@
 (spit "things/touchpad-insert.scad"
       (write-scad touchpad-insert))
 
-(def hand-on-test
-  (translate [-15 -64 92]
-             (rotate (deg2rad -32) [1 0 0]
-                     (rotate (deg2rad 7) [0 0 1]
-                             (rotate tenting-angle [0 1 0]
-                                     (rotate
-                                      (deg2rad -90) [1 0 0]
-                                      (mirror [0 1 0] hand)
-                                      )
-                                     )
-                             )
-                     )
-             ))
-(spit "things/right-test.scad"
-      (write-scad
-        (difference
-          (union
-           hand-on-test
 
-            key-holes
-            pinky-connectors
-            pinky-walls
-            connectors
-            thumb
-            thumb-connectors
-            case-walls
-            thumbcaps
-            caps)
-
-          (translate [0 0 -20] (cube 350 350 40)))))
 
 (def plate2d (cut
               (translate [0 0 -0.1]
@@ -1068,19 +1044,20 @@
 (def dowel-depth-in-shell 1.8)
 (def bearing-protrude (- 3 dowel-depth-in-shell)) ; Radius of the baring minus how deep it's going into the shell
 (def trackball-width 34)
-(def trackball-width-plus-bearing (+ bearing-protrude trackball-width))
+(def trackball-width-plus-bearing (+ bearing-protrude trackball-width 1)) ; Add one just to give some wiggle
 (def holder-thickness 4)
 (def outer-width (+ (* 2 holder-thickness) trackball-width-plus-bearing))
 
+(def axel-angle 22)
 (def dowell-width 3)
 (def dowel-top-change 0)
 (def dowel-top-height 1.5)
-(def dowell-height 6.2) ; Dowel height is actually 6mm. But attempting to get it to "snap" in place
+(def dowell-height 6) ; Dowel height is actually 6mm. But attempting to get it to "snap" in place
 (def dowell (union (cylinder (- (/ dowell-width 2) dowel-top-change) (+ dowell-height dowel-top-height) :fn 50) (cylinder (/ dowell-width 2) dowell-height :fn 50)))
-(def bearing (cylinder (/ 8.5 2) 3.5)) ; Bearing is actually 6mm x 2.5mm, model it as 8.5mm x 3 to give it room to spin
+(def bearing (cylinder (/ 8.5 2) 3)) ; Bearing is actually 6mm x 2.5mm, model it as 8.5mm x 3 to give it room to spin
 (def dowell-bearing (rotate (deg2rad 90) [1 0 0] (union dowell bearing)))
 (defn rotated_dowell [angle]
-  (rotate (deg2rad angle) [0, 0, 1] (rotate (deg2rad 28) [0, 1, 0] (
+  (rotate (deg2rad angle) [0, 0, 1] (rotate (deg2rad axel-angle) [0, 1, 0] (
                                                                      translate [(+ (/ trackball-width-plus-bearing 2) dowel-depth-in-shell) 0 0] (union
                                                                                                                                    ; Add a cube on the side of the dowell so there's an insertion point when we diff with the shell
                                                                                                                                    (translate [(- (/ dowell-width 2)) 0 0] (cube (+ dowell-width 1) (- dowell-height dowel-top-change) dowell-width))
@@ -1094,7 +1071,7 @@
               (rotated_dowell 120)
               (rotated_dowell 240))
   )
-(def vertical-hold 3) ; Millimeters of verticle hold after the curviture of the sphere ends to help hold the ball in
+(def vertical-hold 0) ; Millimeters of verticle hold after the curviture of the sphere ends to help hold the ball in
 (def cup (
            difference
            (union
@@ -1114,7 +1091,6 @@
   )
 
 (def holder-negatives (union
-                       (cube 4 6 outer-width) ; Cut a hole in the bottom
                        dowells
                        bottom-trim
                        )
@@ -1130,22 +1106,132 @@
                    )
   )
 
-(def test-holder-with-ball (
-                             union
-                             test-holder
-                             (translate [0 0 (+ (/ holder-thickness 2) 1)] (sphere (/ trackball-width 2)))))
+(def test-ball (sphere (/ trackball-width 2)))
 
-(def trackpad-origin (map + thumborigin [-43 5 -13]))
+(def test-holder-with-ball (union
+                            (translate [0 0 (- (/ holder-thickness 2))] cup)
+                            test-ball
+                             ))
 
-(def model-right-with-tent-and-trackball (
+(def trackball-origin (map + thumb-tip-origin [-6 3.5 -3]))
+
+
+(def clearance {1 (let [bl2 (/ 18.5 2)
+                     m (/ 17 2)
+                     key-cap (cube (+ keyswitch-width 2.5) (+ keyswitch-width 2.5) 30)]
+                 (->> key-cap
+                      (translate [0 0 (/ 30 2)])
+                      (color [220/255 163/255 163/255 1])))
+             2 (let [bl2 sa-length
+                     bw2 (/ 18.25 10)
+                     key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
+                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+                                        (translate [0 0 0.05]))
+                                   (->> (polygon [[6 16] [6 -16] [-6 -16] [-6 16]])
+                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+                                        (translate [0 0 12])))]
+                 (->> key-cap
+                      (translate [0 0 (+ 5 plate-thickness)])
+                      (color [127/255 159/255 127/255 1])))
+             1.5 (let [bl2 (/ 18.25 2)
+                       bw2 (/ 27.94 2)
+                       key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
+                                          (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+                                          (translate [0 0 0.05]))
+                                     (->> (polygon [[11 6] [-11 6] [-11 -6] [11 -6]])
+                                          (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+                                          (translate [0 0 12])))]
+                   (->> key-cap
+                        (translate [0 0 0])
+                        (color [240/255 223/255 175/255 1])))})
+(def thumb-key-clearance (union
+                          (thumb-1x-layout (clearance 1))
+                          (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 1)))))
+(def key-clearance (apply union
+                          (for [column columns
+                                row rows
+                                :when (or (.contains [2 3] column)
+                                          (not= row lastrow))]
+                            (->> (clearance (if (and (true? pinky-15u) (= column lastcol)) 1.5 1))
+                                 (key-place column row)))))
+
+(defn trackball-mount-rotate [thing] (rotate (deg2rad -12) [0 0 1]
+                                             (rotate (deg2rad 34) [1 0 0]
+                                                     (rotate (deg2rad -39) [0 1 0] thing))
+                                             ))
+(def trackball-mount-translated-to-model (difference
+   (translate trackball-origin
+                                              (difference
+                                               ; We actually have room for two cups. One rotated slightly so that the
+                                               ; ball is completely closed off from the inside of the keyboard
+                                               (union
+                                                (rotate (deg2rad 24) [0 0 1]
+                                                        (rotate (deg2rad 70) [1 0 0]
+                                                                (rotate (deg2rad -39) [0 1 0] cup)
+                                                                )
+                                                        )
+                                                (trackball-mount-rotate cup)
+                                                )
+                                               ; subtract out room for the axels
+                                               (rotate
+                                                (deg2rad 37) [0 0 1]
+                                                (rotate
+                                                 (deg2rad -23) [0 1 0]
+                                                 (translate [0 0 (- (/ holder-thickness 2))] dowells)
+                                                 )
+                                                 )
+                                               ; Subtract out the bottom trim clearing a hole for the sensor
+                                               bottom-trim
+                                                )
+
+                                              )
+   ; Subtract out clearance so there's nothing above the keys
+   key-clearance
+   thumb-key-clearance
+   ))
+
+(def model-right-with-tent-and-trackball (difference
+                                          (
                                            union
                                            model-right-with-tent
-                                           (translate trackpad-origin
-                                                      (rotate (deg2rad 30) [1 0 0]
-                                                              (rotate (deg2rad 15) [0 1 0] test-holder-with-ball)
-                                                              )
-                                                      )
-                                           ))
+                                           trackball-mount-translated-to-model
+                                           )
+                                          ; Subtract out the actual trackball
+                                          (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
+                                          ; This makes sure we can actually insert the trackball by leaving a column a little wider than it's width
+                                          (translate trackball-origin
+                                                     (rotate (deg2rad 22) [0 0 1]
+                                                             (trackball-mount-rotate
+                                                              (translate [0 0 (- (/ trackball-width 2) (/ holder-thickness 2))]
+                                                                         (cylinder (+ (/ trackball-width 2) 1) (/ outer-width 2)))))
+                                                             )
+
+                                          ))
+
+(def hand-on-test
+  (translate [-15 -64 92]
+             (rotate (deg2rad -32) [1 0 0]
+                     (rotate (deg2rad 7) [0 0 1]
+                             (rotate tenting-angle [0 1 0]
+                                     (rotate
+                                      (deg2rad -90) [1 0 0]
+                                      (mirror [0 1 0] hand)
+                                      )
+                                     )
+                             )
+                     )
+             ))
+(spit "things/right-test.scad"
+      (write-scad
+       (difference
+        (union
+         hand-on-test
+         model-right-with-tent-and-trackball
+         (translate trackball-origin test-ball)
+         thumbcaps
+         caps)
+
+        (translate [0 0 -20] (cube 350 350 40)))))
 
 (spit "things/trackball-test.scad" (write-scad test-holder))
 
