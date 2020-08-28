@@ -805,11 +805,6 @@
    (circle 1))
   )
 
-(def slightly-larger (
-                       hull
-                       (resize [126 126 126] plate2d)
-                       (circle 1)
-                      ))
 (def cutout-plate
   (color [220/255 163/255 163/255 1]
          (difference
@@ -823,19 +818,17 @@
 (def bigattempt
   (union
     plate2d
-   (color [220/255 163/255 163/255 1] (resize [117 134 126] cutout-plate))
+   (color [220/255 163/255 163/255 1] (resize [121 141 126] cutout-plate))
    ))
+;(def plate-attempt bigattempt)
+
 (def plate-attempt (difference
                     (extrude-linear {:height 2}
-                    bigattempt
+                                    bigattempt
                                     )
                     (translate [0 0 -10] screw-insert-screw-holes)
                     ))
-(spit "things/right-plate.scad"
-      (write-scad
-       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
-       plate-attempt
-))
+
 
 (spit "things/test.scad"
       (write-scad
@@ -915,44 +908,21 @@
 
 (def trackball-origin (map + thumb-tip-origin [-6 3.5 -3]))
 
+(defn clearance [extrax extray]
+  (translate [0 0 (/ 30 2)]
+             (cube (+ keyswitch-width extrax) (+ keyswitch-width extray) 30)
+             )
+  )
 
-(def clearance {1 (let [bl2 (/ 18.5 2)
-                     m (/ 17 2)
-                     key-cap (cube (+ keyswitch-width 2.5) (+ keyswitch-width 2.5) 30)]
-                 (->> key-cap
-                      (translate [0 0 (/ 30 2)])
-                      (color [220/255 163/255 163/255 1])))
-             2 (let [bl2 sa-length
-                     bw2 (/ 18.25 10)
-                     key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
-                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                        (translate [0 0 0.05]))
-                                   (->> (polygon [[6 16] [6 -16] [-6 -16] [-6 16]])
-                                        (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                        (translate [0 0 12])))]
-                 (->> key-cap
-                      (translate [0 0 (+ 5 plate-thickness)])
-                      (color [127/255 159/255 127/255 1])))
-             1.5 (let [bl2 (/ 18.25 2)
-                       bw2 (/ 27.94 2)
-                       key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
-                                          (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                          (translate [0 0 0.05]))
-                                     (->> (polygon [[11 6] [-11 6] [-11 -6] [11 -6]])
-                                          (extrude-linear {:height 0.1 :twist 0 :convexity 0})
-                                          (translate [0 0 12])))]
-                   (->> key-cap
-                        (translate [0 0 0])
-                        (color [240/255 223/255 175/255 1])))})
 (def thumb-key-clearance (union
-                          (thumb-1x-layout (clearance 1))
-                          (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 1)))))
+                          (thumb-1x-layout (clearance 12 4.5))
+                          (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 2.5 2.5)))))
 (def key-clearance (apply union
                           (for [column columns
                                 row rows
                                 :when (or (.contains [2 3] column)
                                           (not= row lastrow))]
-                            (->> (clearance (if (and (true? pinky-15u) (= column lastcol)) 1.5 1))
+                            (->> (clearance 20 20)
                                  (key-place column row)))))
 
 (defn trackball-mount-rotate [thing] (rotate (deg2rad -12) [0 0 1]
@@ -1026,7 +996,9 @@
 (def tent-stand-rad 3)
 (def crank-rad 1.5)
 (def crank-len 20)
-(def tent-thread (call-module "thread" tent-stand-rad "15" "1.25"))
+(def tent-stand-thread-height 15)
+(def tent-stand-thread-lead 1.25)
+(def tent-thread (call-module "thread" tent-stand-rad tent-stand-thread-height tent-stand-thread-lead))
 (def tent-stand (union
                   tent-thread
                  (translate [0 0 -3] (sphere tent-ball-rad))
@@ -1063,6 +1035,32 @@
                 (rotated-ball-hook 180)
                 (rotated-ball-hook 270)
                  ))
+
+(def thumb-tent-origin [-8 -70 -1])
+(def index-tent-origin [-48 17 -1])
+
+(def tent-nut-height 4)
+(def tent-thread (call-module "thread" tent-stand-rad tent-nut-height tent-stand-thread-lead))
+(def tent-nut (difference
+               (translate [0 0 (/ tent-nut-height 2)] (cylinder (+ tent-stand-rad 1) tent-nut-height))
+               tent-thread
+                ))
+
+(spit "things/right-plate.scad"
+      (write-scad
+       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       (difference
+        (union
+         plate-attempt
+         (translate thumb-tent-origin tent-nut)
+         (translate index-tent-origin tent-nut)
+         )
+        (translate thumb-tent-origin tent-thread)
+        (translate index-tent-origin tent-thread)
+        )
+
+       ))
+
 (spit "things/tent-foot.scad"
       (write-scad tent-foot)
       )
