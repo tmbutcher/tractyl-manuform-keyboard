@@ -768,30 +768,6 @@
     (key-wall-brace lastcol cornerrow 0 -1 web-post-br lastcol cornerrow 0 -1 wide-post-br)
     (key-wall-brace lastcol 0 0 1 web-post-tr lastcol 0 0 1 wide-post-tr)))
 
-(def model-right
-  (difference
-   (union
-                     key-holes
-                     pinky-connectors
-                     pinky-walls
-                     connectors
-                     thumb
-                     thumb-connectors
-                     (difference (union
-                                     case-walls
-                                        screw-insert-outers
-                                        usb-holder-holder
-                                        trrs-holder
-                                  )
-                                 usb-holder-space
-                                 usb-jack
-                                 trrs-holder-hole
-                                 screw-insert-holes))
-   (translate [0 0 -20] (cube 350 350 40))))
-
-(spit "things/left.scad"
-      (write-scad (mirror [-1 0 0] model-right)))
-
 
 (def plate2d (cut
               (translate [0 0 -0.1]
@@ -960,24 +936,6 @@
    thumb-key-clearance
    ))
 
-(def model-right-with-trackball (difference
-                                          (
-                                           union
-                                           model-right
-                                           trackball-mount-translated-to-model
-                                           )
-                                          ; Subtract out the actual trackball
-                                          (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
-                                          ; This makes sure we can actually insert the trackball by leaving a column a little wider than it's width
-                                          (translate trackball-origin
-                                                     (rotate (deg2rad 22) [0 0 1]
-                                                             (trackball-mount-rotate
-                                                              (translate [0 0 (- (/ trackball-width 2) (/ holder-thickness 2))]
-                                                                         (cylinder (+ (/ trackball-width 2) 1) (/ outer-width 2)))))
-                                                             )
-
-                                          ))
-
 (def hand-on-test
   (translate [-15 -64 92]
              (rotate (deg2rad -32) [1 0 0]
@@ -1046,6 +1004,117 @@
                tent-thread
                 ))
 
+;;;;;;;;;;;;;;;
+;; Palm Rest ;;
+;;;;;;;;;;;;;;;
+(def palm-length 90)
+(def palm-width 70)
+(def palm-cutoff 23)
+(def palm-support (translate [0 0 (- palm-cutoff)] (difference
+                   (resize [palm-width palm-length 80] (sphere 240))
+                   (translate [0 0 (- (- 100 palm-cutoff))] (cube 400 400 200))
+                    )))
+
+(def loop-radius 1.5)
+(def loop-thickness 2)
+(def outer-loop-rad (+ loop-radius loop-thickness))
+(def loop-height 5)
+(def cube-len (+ loop-radius loop-thickness 2)) ; The length of the cube at the bottom of the hole
+(def aloop
+          (rotate (deg2rad 90) [0 1 0]
+                  (translate [0 (- cube-len) 0]
+                             (difference
+                              (union
+                               (cylinder outer-loop-rad loop-height)
+                               (translate [0 (/ cube-len 2) 0] (cube (* 2 outer-loop-rad) cube-len loop-height))
+                               )
+                              (cylinder loop-radius loop-height)
+                              )
+                             )
+                  )
+ )
+(def loop-len 10)
+(def attach-width 20)
+(def gripper-rad (- loop-radius 0.2))
+(def gripper-height 10)
+(def grip-angle -20)
+(def palm-rest-gripper (union
+                        (rotate (deg2rad 90) [0 1 0] (cylinder gripper-rad (+ (* 2 loop-len) loop-height 1)))
+                        (rotate (deg2rad grip-angle) [1 0 0]
+                                (translate [0 0 (- (/ gripper-height 2))] (cube (* 2 gripper-rad) (* 2 gripper-rad) gripper-height))
+                                )
+                         ))
+(def gripper-budge 4) ; How many mm the palm rest can move around on the x axis in the holds
+(def palm-rest-attach
+  (translate [0 (/ attach-width 2) 0]
+             (union
+              (cube (- (* 2 loop-len) loop-height gripper-budge) attach-width (* 2 gripper-rad))
+              (translate [0 (- (/ attach-width 2) gripper-rad) 0] palm-rest-gripper)
+              )
+             ))
+
+(def palm-rest (union
+                palm-support
+                (translate [0 (- (/ palm-length 2) 24) outer-loop-rad]
+                  (rotate (deg2rad -20) [1 0 0] palm-rest-attach))
+                 )
+  )
+
+(def palm-hole-origin (map + (key-position 2 4 [0 0 0]) [-4 -11.5 -7]))
+(def palm-support-angle (+ tenting-angle (deg2rad 14)))
+(def palm-holes-on-keyboard
+  (translate palm-hole-origin
+             (rotate palm-support-angle [0 1 0]
+                             (translate [(- loop-len) (/ attach-width 2) 0] (rotate (deg2rad -90) [1 0 0] aloop))
+                             (translate [loop-len (/ attach-width 2) 0] (rotate (deg2rad -90) [1 0 0] aloop))
+                             )
+             )
+  )
+
+(def model-right-initial
+  (difference
+   (union
+    key-holes
+    pinky-connectors
+    pinky-walls
+    connectors
+    thumb
+    thumb-connectors
+    palm-holes-on-keyboard
+    (difference (union
+                 case-walls
+                 screw-insert-outers
+                 usb-holder-holder
+                 trrs-holder
+                 )
+                usb-holder-space
+                usb-jack
+                trrs-holder-hole
+                screw-insert-holes))
+   (translate [0 0 -20] (cube 350 350 40))))
+
+(def model-right-with-trackball (difference
+                                 (
+                                   union
+                                   model-right-initial
+                                   trackball-mount-translated-to-model
+                                   )
+                                 ; Subtract out the actual trackball
+                                 (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
+                                 ; This makes sure we can actually insert the trackball by leaving a column a little wider than it's width
+                                 (translate trackball-origin
+                                            (rotate (deg2rad 22) [0 0 1]
+                                                    (trackball-mount-rotate
+                                                     (translate [0 0 (- (/ trackball-width 2) (/ holder-thickness 2))]
+                                                                (cylinder (+ (/ trackball-width 2) 1) (/ outer-width 2)))))
+                                            )
+
+                                 ))
+
+(def model-right (if trackball-enabled model-right-with-trackball model-right-initial))
+
+(spit "things/palm-rest.scad" (write-scad palm-rest))
+
 (spit "things/right-plate.scad"
       (write-scad
        (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
@@ -1070,6 +1139,9 @@
        tent-stand
        )
       )
+
+(spit "things/left.scad"
+      (write-scad (mirror [-1 0 0] model-right)))
 (spit "things/tent-all.scad" (write-scad
                               (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
                               (union
@@ -1082,7 +1154,8 @@
        (difference
         (union
          hand-on-test
-         model-right-with-trackball
+         model-right
+         (translate (map + palm-hole-origin [7 -28 8]) (rotate palm-support-angle [0 1 0] palm-rest))
          (translate trackball-origin test-ball)
          thumbcaps
          caps)
@@ -1091,6 +1164,6 @@
 
 (spit "things/trackball-test.scad" (write-scad test-holder))
 
-(spit "things/right.scad" (write-scad model-right-with-trackball))
+(spit "things/right.scad" (write-scad model-right))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
