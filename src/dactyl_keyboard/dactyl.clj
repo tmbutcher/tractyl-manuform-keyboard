@@ -950,16 +950,16 @@
                      )
              ))
 
-(def tent-ball-rad 5)
-(def tent-stand-rad 3)
+(def tent-ball-rad 7)
+(def tent-stand-rad 5)
 (def crank-rad 1.5)
 (def crank-len 20)
-(def tent-stand-thread-height 15)
+(def tent-stand-thread-height 25)
 (def tent-stand-thread-lead 1.25)
 (def tent-thread (call-module "thread" tent-stand-rad tent-stand-thread-height tent-stand-thread-lead))
 (def tent-stand (union
                   tent-thread
-                 (translate [0 0 -3] (sphere tent-ball-rad))
+                 (translate [0 0 (- tent-stand-rad)] (sphere tent-ball-rad))
                   ))
 
 
@@ -997,19 +997,23 @@
 (def thumb-tent-origin [-8 -70 -1])
 (def index-tent-origin [-48 17 -1])
 
-(def tent-nut-height 4)
-(def tent-thread (call-module "thread" tent-stand-rad tent-nut-height tent-stand-thread-lead))
+(def tent-nut-height 6)
+(def tent-thread
+  (rotate (deg2rad 180) [0 1 0]
+          (call-module "thread" (+ tent-stand-rad 0.5) tent-nut-height tent-stand-thread-lead)
+          )
+  )
 (def tent-nut (difference
-               (translate [0 0 (/ tent-nut-height 2)] (cylinder (+ tent-stand-rad 1) tent-nut-height))
+               (translate [0 0 (/ tent-nut-height 2)] (cylinder (+ tent-stand-rad 1.5) tent-nut-height))
                tent-thread
                 ))
 
 ;;;;;;;;;;;;;;;
 ;; Palm Rest ;;
 ;;;;;;;;;;;;;;;
-(def palm-length 90)
-(def palm-width 70)
-(def palm-cutoff 23)
+(def palm-length 120)
+(def palm-width 90)
+(def palm-cutoff 32)
 (def palm-support (translate [0 0 (- palm-cutoff)] (difference
                    (resize [palm-width palm-length 80] (sphere 240))
                    (translate [0 0 (- (- 100 palm-cutoff))] (cube 400 400 200))
@@ -1037,7 +1041,7 @@
 (def attach-width 20)
 (def gripper-rad (- loop-radius 0.2))
 (def gripper-height 10)
-(def grip-angle -20)
+(def grip-angle -40)
 (def palm-rest-gripper (union
                         (rotate (deg2rad 90) [0 1 0] (cylinder gripper-rad (+ (* 2 loop-len) loop-height 1)))
                         (rotate (deg2rad grip-angle) [1 0 0]
@@ -1055,12 +1059,12 @@
 
 (def palm-rest (union
                 palm-support
-                (translate [0 (- (/ palm-length 2) 24) outer-loop-rad]
-                  (rotate (deg2rad -20) [1 0 0] palm-rest-attach))
+                (translate [0 (- (/ palm-length 2) 52) (+ (- outer-loop-rad 2) 1)]
+                  (rotate (deg2rad -14) [1 0 0] palm-rest-attach))
                  )
   )
 
-(def palm-hole-origin (map + (key-position 2 4 [0 0 0]) [-4 -11.5 -7]))
+(def palm-hole-origin (map + (key-position 2 4 [0 0 0]) [3 -11.5 -11]))
 (def palm-support-angle (+ tenting-angle (deg2rad 14)))
 (def palm-holes-on-keyboard
   (translate palm-hole-origin
@@ -1130,6 +1134,10 @@
 
        ))
 
+(spit "things/tent-nut.scad" (write-scad
+                              (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                              tent-nut))
+
 (spit "things/tent-foot.scad"
       (write-scad tent-foot)
       )
@@ -1153,9 +1161,9 @@
       (write-scad
        (difference
         (union
-         hand-on-test
+;         hand-on-test
          model-right
-         (translate (map + palm-hole-origin [7 -28 8]) (rotate palm-support-angle [0 1 0] palm-rest))
+         (translate (map + palm-hole-origin [7 -15 6]) (rotate palm-support-angle [0 1 0] palm-rest))
          (translate trackball-origin test-ball)
          thumbcaps
          caps)
