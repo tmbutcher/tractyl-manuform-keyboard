@@ -18,7 +18,7 @@
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
-(def centerrow (- nrows 3))             ; controls front-back tilt
+(def centerrow (- nrows 2.5))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
 (def tenting-angle (deg2rad 20))            ; or, change this for more precise tenting control
 (def column-style
@@ -323,33 +323,37 @@
            (rotate (deg2rad  17) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate [-22 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
+(def trackball-middle-translate [-5 4 2])
 (def thumb-tip-offset [-33.5 -16 -5])
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
+(def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-tl-place [shape]
       (->> shape
            (rotate (deg2rad  -3) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate thumb-tip-offset))) ; original 1.5u (translate [-32 -15 -2])))
+           (translate tl-thumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-
+(def mr-thumb-loc (map + [-24.5 -36 -4.5] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
            (rotate (deg2rad  -3) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  25) [0 0 1])
            (translate thumborigin)
-           (translate [-24.5 -36 -4.5])))
+           (translate mr-thumb-loc)))
+
+(def br-thumb-loc (map + [-34.5 -43 -23] (if trackball-enabled [2 -10 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
            (rotate (deg2rad   -7) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
-           (translate [-34.5 -43 -23])))
+           (translate br-thumb-loc)))
 
-(def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [-6 -2 -4.5] [0 0 0])))
+(def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-bl-place [shape]
       (->> shape
            (rotate (deg2rad   -7) [1 0 0])
@@ -363,7 +367,7 @@
       (union
         (thumb-mr-place shape)
         (thumb-br-place shape)
-        (thumb-tl-place shape)
+       (if trackball-enabled nil (thumb-tl-place shape))
         (thumb-bl-place shape)))
 
 (defn thumb-15x-layout [shape]
@@ -395,43 +399,52 @@
 (def thumb-post-br (translate [(- (/ mount-width 2) post-adj)  (+ (/ mount-height -2) post-adj) 0] web-post))
 
 (def thumb-connectors
-  (union
-    (triangle-hulls    ; top two
-      (thumb-tl-place web-post-tr)
-      (thumb-tl-place web-post-br)
-      (thumb-tr-place thumb-post-tl)
-      (thumb-tr-place thumb-post-bl))
-    (triangle-hulls    ; bottom two
-      (thumb-br-place web-post-tr)
-      (thumb-br-place web-post-br)
-      (thumb-mr-place web-post-tl)
-      (thumb-mr-place web-post-bl))
-    (triangle-hulls
-      (thumb-mr-place web-post-tr)
-      (thumb-mr-place web-post-br)
-      (thumb-tr-place thumb-post-br))
-    (triangle-hulls    ; between top row and bottom row
-      (thumb-br-place web-post-tl)
-      (thumb-bl-place web-post-bl)
-      (thumb-br-place web-post-tr)
-      (thumb-bl-place web-post-br)
-      (thumb-mr-place web-post-tl)
-      (thumb-tl-place web-post-bl)
-      (thumb-mr-place web-post-tr)
-      (thumb-tl-place web-post-br)
+  (if trackball-enabled
+    (union
+     ; top right vertical
+     (triangle-hulls
+      (thumb-tr-place web-post-br)
       (thumb-tr-place web-post-bl)
+      (thumb-mr-place web-post-br))
+     ; Between the top and middle
+     (triangle-hulls
+      (thumb-tr-place web-post-tl)
       (thumb-mr-place web-post-tr)
-      (thumb-tr-place web-post-br))
-    (triangle-hulls    ; top two to the middle two, starting on the left
-      (thumb-tl-place web-post-tl)
-      (thumb-bl-place web-post-tr)
-      (thumb-tl-place web-post-bl)
+      (thumb-mr-place web-post-br))
+     (triangle-hulls
+      (thumb-tr-place web-post-bl)
+      (thumb-tr-place web-post-tl)
+      (thumb-mr-place web-post-br))
+     ; Between middle and first bottom
+     (triangle-hulls
+      (thumb-mr-place web-post-tl)
+      (thumb-br-place web-post-tr)
+      (thumb-br-place web-post-br))
+     (triangle-hulls
+      (thumb-mr-place web-post-bl)
+      (thumb-mr-place web-post-tl)
+      (thumb-br-place web-post-br)
+      (thumb-bl-place web-post-br))
+     ; Between the top and middle over by the trackball
+     (triangle-hulls
+      (thumb-tr-place web-post-tl)
+      (thumb-mr-place web-post-tr)
+      (thumb-mr-place web-post-tl))
+     ; Between the bottom two
+     (triangle-hulls
+      (thumb-br-place web-post-tr)
+      (thumb-br-place web-post-tl)
+      (thumb-bl-place web-post-br))
+     (triangle-hulls
       (thumb-bl-place web-post-br)
-      (thumb-mr-place web-post-tr)
-      (thumb-tl-place web-post-bl)
-      (thumb-tl-place web-post-br)
-      (thumb-mr-place web-post-tr))
-    (triangle-hulls    ; top two to the main keyboard, starting on the left
+      (thumb-bl-place web-post-bl)
+      (thumb-br-place web-post-tl))
+     ; Between the middle and the bl
+     (triangle-hulls
+      (thumb-mr-place web-post-tl)
+      (thumb-bl-place web-post-tr)
+      (thumb-bl-place web-post-br))
+     (triangle-hulls    ; top two to the main keyboard, starting on the left
       (thumb-tl-place web-post-tl)
       (key-place 0 cornerrow web-post-bl)
       (thumb-tl-place web-post-tr)
@@ -453,18 +466,90 @@
       (key-place 3 lastrow web-post-tr)
       (key-place 3 cornerrow web-post-br)
       (key-place 4 cornerrow web-post-bl))
-    (triangle-hulls
+     (triangle-hulls
       (key-place 1 cornerrow web-post-br)
       (key-place 2 lastrow web-post-tl)
       (key-place 2 cornerrow web-post-bl)
       (key-place 2 lastrow web-post-tr)
       (key-place 2 cornerrow web-post-br)
       (key-place 3 cornerrow web-post-bl))
-    (triangle-hulls
+     (triangle-hulls
       (key-place 3 lastrow web-post-tr)
       (key-place 3 lastrow web-post-br)
       (key-place 3 lastrow web-post-tr)
-      (key-place 4 cornerrow web-post-bl))))
+      (key-place 4 cornerrow web-post-bl)))
+    (union
+     (triangle-hulls    ; top two
+      (thumb-tl-place web-post-tr)
+      (thumb-tl-place web-post-br)
+      (thumb-tr-place thumb-post-tl)
+      (thumb-tr-place thumb-post-bl))
+     (triangle-hulls    ; bottom two
+      (thumb-br-place web-post-tr)
+      (thumb-br-place web-post-br)
+      (thumb-mr-place web-post-tl)
+      (thumb-mr-place web-post-bl))
+     (triangle-hulls
+      (thumb-mr-place web-post-tr)
+      (thumb-mr-place web-post-br)
+      (thumb-tr-place thumb-post-br))
+     (triangle-hulls    ; between top row and bottom row
+      (thumb-br-place web-post-tl)
+      (thumb-bl-place web-post-bl)
+      (thumb-br-place web-post-tr)
+      (thumb-bl-place web-post-br)
+      (thumb-mr-place web-post-tl)
+      (thumb-tl-place web-post-bl)
+      (thumb-mr-place web-post-tr)
+      (thumb-tl-place web-post-br)
+      (thumb-tr-place web-post-bl)
+      (thumb-mr-place web-post-tr)
+      (thumb-tr-place web-post-br))
+     (triangle-hulls    ; top two to the middle two, starting on the left
+      (thumb-tl-place web-post-tl)
+      (thumb-bl-place web-post-tr)
+      (thumb-tl-place web-post-bl)
+      (thumb-bl-place web-post-br)
+      (thumb-mr-place web-post-tr)
+      (thumb-tl-place web-post-bl)
+      (thumb-tl-place web-post-br)
+      (thumb-mr-place web-post-tr))
+     (triangle-hulls    ; top two to the main keyboard, starting on the left
+      (thumb-tl-place web-post-tl)
+      (key-place 0 cornerrow web-post-bl)
+      (thumb-tl-place web-post-tr)
+      (key-place 0 cornerrow web-post-br)
+      (thumb-tr-place thumb-post-tl)
+      (key-place 1 cornerrow web-post-bl)
+      (thumb-tr-place thumb-post-tr)
+      (key-place 1 cornerrow web-post-br)
+      (key-place 2 lastrow web-post-tl)
+      (key-place 2 lastrow web-post-bl)
+      (thumb-tr-place thumb-post-tr)
+      (key-place 2 lastrow web-post-bl)
+      (thumb-tr-place thumb-post-br)
+      (key-place 2 lastrow web-post-br)
+      (key-place 3 lastrow web-post-bl)
+      (key-place 2 lastrow web-post-tr)
+      (key-place 3 lastrow web-post-tl)
+      (key-place 3 cornerrow web-post-bl)
+      (key-place 3 lastrow web-post-tr)
+      (key-place 3 cornerrow web-post-br)
+      (key-place 4 cornerrow web-post-bl))
+     (triangle-hulls
+      (key-place 1 cornerrow web-post-br)
+      (key-place 2 lastrow web-post-tl)
+      (key-place 2 cornerrow web-post-bl)
+      (key-place 2 lastrow web-post-tr)
+      (key-place 2 cornerrow web-post-br)
+      (key-place 3 cornerrow web-post-bl))
+     (triangle-hulls
+      (key-place 3 lastrow web-post-tr)
+      (key-place 3 lastrow web-post-br)
+      (key-place 3 lastrow web-post-tr)
+      (key-place 4 cornerrow web-post-bl)))
+    )
+  )
 
 ;;;;;;;;;;
 ;; Hand ;;
@@ -653,10 +738,9 @@
 
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
 
-(def usb-holder-position (map + [20 20 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-cube   (cube 40 12 2))
-(def usb-holder-space  (translate (map + usb-holder-position [0 (* -1 wall-thickness) 2]) usb-holder-cube))
-(def usb-holder-holder (translate usb-holder-position (cube 29 12 4)))
+(def usb-holder-position (map + [20 18 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
+(def usb-holder-cube   (cube 18.5 33.5 2))
+(def usb-holder-holder (translate (map + usb-holder-position [5 -14 0]) (difference (cube 21 35 4) (translate [0 0 1] usb-holder-cube))))
 
 (def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
 
@@ -713,13 +797,13 @@
                 (translate (map + offset [(first position) (second position) (/ height 2)])))))
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
-      (union (screw-insert 0 0         bottom-radius top-radius height [6 7 0])
-             (screw-insert 0 lastrow   bottom-radius top-radius height [-2 15 0])
+      (union (screw-insert 0 0         bottom-radius top-radius height [7.5 7 0])
+             (screw-insert 0 lastrow   bottom-radius top-radius height [0 15 0])
              ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
              (screw-insert lastcol lastrow  bottom-radius top-radius height [-6 13 0])
-             (screw-insert lastcol 0         bottom-radius top-radius height [-2 2 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height [2 -18.7 0])))
+             (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
+             (screw-insert 1 lastrow         bottom-radius top-radius height [-6 -18.7 0])))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -810,14 +894,14 @@
       (write-scad
         (difference trrs-holder trrs-holder-hole)))
 
-(def dowel-depth-in-shell 1.8)
+(def dowel-depth-in-shell 1.5)
 (def bearing-protrude (- 3 dowel-depth-in-shell)) ; Radius of the baring minus how deep it's going into the shell
 (def trackball-width 34)
-(def trackball-width-plus-bearing (+ bearing-protrude trackball-width 1)) ; Add one just to give some wiggle
-(def holder-thickness 4)
+(def trackball-width-plus-bearing (+ bearing-protrude trackball-width 2)) ; Add one just to give some wiggle
+(def holder-thickness 4.2)
 (def outer-width (+ (* 2 holder-thickness) trackball-width-plus-bearing))
 
-(def axel-angle 22)
+(def axel-angle 19)
 (def dowell-width 3)
 (def dowel-top-change 0)
 (def dowel-top-height 1.5)
@@ -855,8 +939,9 @@
 ; We know the ball will sit approx bearing-protrude over the sensor holder. Eliminate the bottom and make it square
 ; up to that point with trim
 (def trim (- (+ holder-thickness bearing-protrude) 0.5))
+(def bottom-trim-origin [0 0 (- (- (/ outer-width 2) (/ trim 2)))])
 (def bottom-trim ; trim the bottom off of the cup to get a lower profile
-  (translate [0 0 (- (- (/ outer-width 2) (/ trim 2)))] (cube outer-width outer-width trim))
+  (translate bottom-trim-origin (cube outer-width outer-width trim))
   )
 
 (def holder-negatives (union
@@ -882,54 +967,92 @@
                             test-ball
                              ))
 
-(def trackball-origin (map + thumb-tip-origin [-6 3.5 -3]))
+(def trackball-origin (map + thumb-tip-origin [-10.5 10 -4]))
 
-(defn clearance [extrax extray]
+(defn clearance [extrax extray extraz]
   (translate [0 0 (/ 30 2)]
-             (cube (+ keyswitch-width extrax) (+ keyswitch-width extray) 30)
+             (cube (+ keyswitch-width extrax) (+ keyswitch-width extray) extraz)
              )
   )
 
 (def thumb-key-clearance (union
-                          (thumb-1x-layout (clearance 12 4.5))
-                          (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 2.5 2.5)))))
+                          (thumb-1x-layout (clearance 12 8.5 30))
+                          (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 2.5 2.5 30)))))
 (def key-clearance (apply union
                           (for [column columns
                                 row rows
                                 :when (or (.contains [2 3] column)
                                           (not= row lastrow))]
-                            (->> (clearance 20 20)
+                            (->> (clearance keyswitch-width keyswitch-width 35)
                                  (key-place column row)))))
 
 (defn trackball-mount-rotate [thing] (rotate (deg2rad -12) [0 0 1]
                                              (rotate (deg2rad 34) [1 0 0]
                                                      (rotate (deg2rad -39) [0 1 0] thing))
                                              ))
+
+(def sensor-length 28)
+(def sensor-width 21)
+(def sensor-holder-width (/ sensor-width 2))
+(def sensor-height 7.5)
+(def sensor-holder-arm (translate [0 -0.5 0]
+                         (union
+                          (translate [0 (- (/ 4 2) (/ 1 2)) 1] (cube sensor-holder-width 4 2))
+                        (translate [0 0 (- (/ sensor-height 2))] (cube sensor-holder-width 1 sensor-height))
+                        (translate [0 (- (/ 4 2) (/ 1 2)) (- (+ sensor-height (/ 1 2)))] (cube sensor-holder-width 4 1))
+                        )))
+(def sensor-holder
+  (translate (map + bottom-trim-origin [0 0 (/ trim 2)])
+             (union
+              (translate [0 (- (/ sensor-length 2)) 0] sensor-holder-arm)
+              (->>
+               sensor-holder-arm
+               (mirror [0 1 0])
+               (translate [0 (/ sensor-length 2) 0])
+               )
+              )
+             )
+  )
+
+(defn sensor-hole-angle [shape] (
+                             ->> shape
+                                 (rotate (deg2rad -55) [0 1 0])
+                                 (rotate (deg2rad 40) [0 0 1])
+                                 ))
+(defn dowell-angle [shape] (
+                     ->> shape
+                         (rotate (deg2rad -20) [0 0 1])
+                         (rotate (deg2rad -30) [0 1 0])
+                         (rotate (deg2rad 25) [1 0 0])
+                     ))
+(def trackball-mount
+  (union
+   (difference
+    ; We actually have room for two cups. One rotated slightly so that the
+    ; ball is completely closed off from the inside of the keyboard
+    (union
+     (rotate (deg2rad -15) [1 0 0]
+             (rotate (deg2rad 69) [0 0 1]
+                     (rotate (deg2rad -90) [0 1 0] cup)
+                     )
+             )
+     (trackball-mount-rotate cup)
+     )
+    ; subtract out room for the axels
+    (dowell-angle
+      (translate [0 0 (- (/ holder-thickness 2))] dowells)
+     )
+    ; Subtract out the bottom trim clearing a hole for the sensor
+    (sensor-hole-angle bottom-trim)
+    )
+   (sensor-hole-angle sensor-holder)
+   )
+  )
+
+(def raised-trackball (translate [0 0 (+ bearing-protrude 1)] (sphere (+ (/ trackball-width 2) 0.5))))
 (def trackball-mount-translated-to-model (difference
    (translate trackball-origin
-                                              (difference
-                                               ; We actually have room for two cups. One rotated slightly so that the
-                                               ; ball is completely closed off from the inside of the keyboard
-                                               (union
-                                                (rotate (deg2rad 24) [0 0 1]
-                                                        (rotate (deg2rad 70) [1 0 0]
-                                                                (rotate (deg2rad -39) [0 1 0] cup)
-                                                                )
-                                                        )
-                                                (trackball-mount-rotate cup)
-                                                )
-                                               ; subtract out room for the axels
-                                               (rotate
-                                                (deg2rad 37) [0 0 1]
-                                                (rotate
-                                                 (deg2rad -23) [0 1 0]
-                                                 (translate [0 0 (- (/ holder-thickness 2))] dowells)
-                                                 )
-                                                 )
-                                               ; Subtract out the bottom trim clearing a hole for the sensor
-                                               bottom-trim
-                                                )
-
+              trackball-mount
                                               )
    ; Subtract out clearance so there's nothing above the keys
    key-clearance
@@ -937,7 +1060,7 @@
    ))
 
 (def hand-on-test
-  (translate [-15 -64 92]
+  (translate [-15 -54 92]
              (rotate (deg2rad -32) [1 0 0]
                      (rotate (deg2rad 7) [0 0 1]
                              (rotate tenting-angle [0 1 0]
@@ -1019,7 +1142,7 @@
                    (translate [0 0 (- (- 100 palm-cutoff))] (cube 400 400 200))
                     )))
 
-(def loop-radius 1.5)
+(def loop-radius 2)
 (def loop-thickness 2)
 (def outer-loop-rad (+ loop-radius loop-thickness))
 (def loop-height 5)
@@ -1059,12 +1182,12 @@
 
 (def palm-rest (union
                 palm-support
-                (translate [0 (- (/ palm-length 2) 52) (+ (- outer-loop-rad 2) 1)]
+                (translate [0 (- (/ palm-length 2) 52) (- outer-loop-rad 2)]
                   (rotate (deg2rad -14) [1 0 0] palm-rest-attach))
                  )
   )
 
-(def palm-hole-origin (map + (key-position 2 4 [0 0 0]) [3 -11.5 -11]))
+(def palm-hole-origin (map + (key-position 2 4 [0 0 0]) [3 -8 -8.5]))
 (def palm-support-angle (+ tenting-angle (deg2rad 14)))
 (def palm-holes-on-keyboard
   (translate palm-hole-origin
@@ -1091,12 +1214,18 @@
                  usb-holder-holder
                  trrs-holder
                  )
-                usb-holder-space
                 usb-jack
                 trrs-holder-hole
                 screw-insert-holes))
    (translate [0 0 -20] (cube 350 350 40))))
 
+; This makes sure we can actually insert the trackball by leaving a column a little wider than it's width
+(def trackball-insertion-cyl
+  (rotate (deg2rad 45) [0 0 1]
+          (rotate (deg2rad -68) [0 1 0]
+                  (translate [0 0 (- (/ trackball-width 2) (/ holder-thickness 2))]
+                             (cylinder (+ (/ trackball-width 2) 1) (/ outer-width 2)))))
+  )
 (def model-right-with-trackball (difference
                                  (
                                    union
@@ -1104,14 +1233,11 @@
                                    trackball-mount-translated-to-model
                                    )
                                  ; Subtract out the actual trackball
+                                 (translate trackball-origin (dowell-angle raised-trackball))
+                                 ; Subtract out space for the cup, because sometimes things from the keyboard creep in
                                  (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
                                  ; This makes sure we can actually insert the trackball by leaving a column a little wider than it's width
-                                 (translate trackball-origin
-                                            (rotate (deg2rad 22) [0 0 1]
-                                                    (trackball-mount-rotate
-                                                     (translate [0 0 (- (/ trackball-width 2) (/ holder-thickness 2))]
-                                                                (cylinder (+ (/ trackball-width 2) 1) (/ outer-width 2)))))
-                                            )
+                                 (translate trackball-origin trackball-insertion-cyl)
 
                                  ))
 
@@ -1161,7 +1287,7 @@
       (write-scad
        (difference
         (union
-;         hand-on-test
+         hand-on-test
          model-right
          (translate (map + palm-hole-origin [7 -15 6]) (rotate palm-support-angle [0 1 0] palm-rest))
          (translate trackball-origin test-ball)
@@ -1170,8 +1296,25 @@
 
         (translate [0 0 -20] (cube 350 350 40)))))
 
-(spit "things/trackball-test.scad" (write-scad test-holder))
+(spit "things/trackball-test.scad" (write-scad
+                                    (union
+;                                     (dowell-angle (translate [0 0 bearing-protrude] (sphere (/ trackball-width 2))))
+                                     (difference
+                                      trackball-mount
+                                      trackball-insertion-cyl
+                                      (dowell-angle raised-trackball)
+                                      )
+                                     )
+                                      )
+                                    )
 
-(spit "things/right.scad" (write-scad model-right))
+(spit "things/right.scad" (write-scad (difference
+                                        model-right
+;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
+;                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
+;                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
+;                                       (translate (key-position 4 0 [-10 17 0]) (cube 40 32 200))
+;                                       (translate (key-position 4 0 [7 10 0]) (cube 35 40 200))
+                                       )))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
