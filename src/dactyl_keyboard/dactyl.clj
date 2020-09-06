@@ -322,7 +322,7 @@
 
 (defn thumb-tr-place [shape]
       (->> shape
-           (rotate (deg2rad  -3) [1 0 0])
+           (rotate (deg2rad  -7) [1 0 0])
            (rotate (deg2rad -45) [0 1 0])
            (rotate (deg2rad  27) [0 0 1]) ; original 10
            (translate thumborigin)
@@ -333,25 +333,25 @@
 (def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-tl-place [shape]
       (->> shape
-           (rotate (deg2rad  -7) [1 0 0])
+           (rotate (deg2rad  -11) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  35) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate tl-thumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-(def mr-thumb-loc (map + [-23 -33.5 -3] (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def mr-thumb-loc (map + [-24 -34 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
-           (rotate (deg2rad  -7) [1 0 0])
+           (rotate (deg2rad  -11) [1 0 0])
            (rotate (deg2rad -60) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
            (translate mr-thumb-loc)))
 
-(def br-thumb-loc (map + [-33 -40.5 -21] (if trackball-enabled [2 -10 2] [0 0 0])))
+(def br-thumb-loc (map + [-34 -41 -20] (if trackball-enabled [2 -10 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
-           (rotate (deg2rad   -11) [1 0 0])
+           (rotate (deg2rad   -15) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  40) [0 0 1])
            (translate thumborigin)
@@ -360,7 +360,7 @@
 (def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-bl-place [shape]
       (->> shape
-           (rotate (deg2rad   -11) [1 0 0])
+           (rotate (deg2rad   -15) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  37) [0 0 1])
            (translate thumborigin)
