@@ -14,7 +14,7 @@
 
 (def nrows 4)
 (def ncols 5)
-(def trackball-enabled false)
+(def trackball-enabled true)
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
@@ -29,7 +29,7 @@
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
                                (= column 3) [0 -1 -4]
-                               (>= column 4) [0 -14 -3.50]            ; original [0 -5.8 5.64]
+                               (>= column 4) [0 -14 -5.50]            ; original [0 -5.8 5.64]
                                :else [0 -5 1.5]))
 
 (def thumb-offsets [6 0 10])
@@ -252,8 +252,8 @@
                                       plate-thickness)])))
 
 (def big-boi-web-post (->> (cube post-size (+ post-size 30) web-thickness)
-                   (translate [0 0 (+ (/ web-thickness -2)
-                                      plate-thickness)])))
+                   (translate [0 0 (- (+ (/ web-thickness -2)
+                                      plate-thickness) 1)])))
 
 (def post-adj (/ post-size 2))
 (def web-post-tr (translate [(- (/ mount-width 2) post-adj) (- (/ mount-height 2) post-adj) 0] web-post))
@@ -327,7 +327,7 @@
            (rotate (deg2rad  27) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate [-22 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
-(def trackball-middle-translate [-5 8 0])
+(def trackball-middle-translate [-7 6.5 -1.5])
 (def thumb-tip-offset [-33.5 -16 -5])
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 (def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
@@ -339,7 +339,7 @@
            (translate thumborigin)
            (translate tl-thumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-(def mr-thumb-loc (map + [-24 -34 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def mr-thumb-loc (map + [-24 -35 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
            (rotate (deg2rad  -11) [1 0 0])
@@ -348,7 +348,7 @@
            (translate thumborigin)
            (translate mr-thumb-loc)))
 
-(def br-thumb-loc (map + [-34 -41 -20] (if trackball-enabled [2 -10 2] [0 0 0])))
+(def br-thumb-loc (map + [-34 -42 -20] (if trackball-enabled [2 -10 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
            (rotate (deg2rad   -15) [1 0 0])
@@ -602,7 +602,7 @@
 (def palm
   (translate [42.5 0 -40] (union
                             (cube 85 30 80)
-                            (rotate (deg2rad 32.5) [1 0 0]
+                            (rotate (deg2rad 35) [1 0 0]
                                     (translate [(+ 7 (/ -85 2)) -25 25]
                                                (cylinder 10.5 100)
                                                )
@@ -699,7 +699,7 @@
   )
 
 (def thumb-key-clearance (union
-                          (thumb-1x-layout (clearance 12 8.5 30))
+                          (thumb-1x-layout (clearance 0 0 30))
                           (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 2.5 2.5 30)))))
 (def key-clearance (apply union
                           (for [column columns
@@ -744,7 +744,7 @@
                                       ))
 (defn dowell-angle [shape] (
                              ->> shape
-                                 (rotate (deg2rad -20) [0 0 1])
+                                 (rotate (deg2rad (+ 90 35)) [0 0 1])
                                  (rotate (deg2rad -30) [0 1 0])
                                  (rotate (deg2rad 25) [1 0 0])
                                  ))
@@ -885,6 +885,7 @@
       (bottom 30 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
       (translate trackball-origin (trackball-mount-rotate cup))))
     key-clearance
+    thumb-key-clearance
     (translate trackball-origin rotated-bottom-trim)
     (translate trackball-origin rotated-dowells)
     (translate trackball-origin trackball-insertion-cyl))))
@@ -1030,9 +1031,9 @@
              (screw-insert 0 lastrow   bottom-radius top-radius height [0 15 0])
              ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
-             (screw-insert lastcol lastrow  bottom-radius top-radius height [-6 13 0])
+             (screw-insert lastcol lastrow  bottom-radius top-radius height [-5.5 17 0])
              (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height [-6 -18.7 0])))
+             (screw-insert 1 lastrow         bottom-radius top-radius height [-5.5 -16 0])))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -1133,10 +1134,10 @@
    ))
 
 (def hand-on-test
-  (translate [-11 -60 92]
+  (translate [-5 -60 92]
              (rotate (deg2rad -27) [1 0 0]
-                     (rotate (deg2rad 9) [0 0 1]
-                             (rotate tenting-angle [0 1 0]
+                     (rotate (deg2rad 12) [0 0 1]
+                             (rotate (+ tenting-angle (deg2rad 5)) [0 1 0]
                                      (rotate
                                       (deg2rad -90) [1 0 0]
                                       (mirror [0 1 0] hand)
@@ -1216,14 +1217,15 @@
                     )))
 
 (defn palm-rest-hole-rotate [h] (rotate (deg2rad -8) [0 0 1] h))
-(def palm-hole-origin (map + (key-position 2 (+ cornerrow 1) (wall-locate3 0 -1)) [7 -12 -15]) )
+(def palm-hole-origin (map + (key-position 3 (+ cornerrow 1) (wall-locate3 0 -1)) [-1.5 -8 -11]) )
 
-(def triangle-length 6)
-(def triangle-width 4)
-(def buckle-width 12)
-(def buckle-thickness 2)
-(def buckle-length 3.5)
+(def triangle-length 7)
+(def triangle-width 5)
+(def buckle-width 16)
+(def buckle-thickness 3)
+(def buckle-length 3.7)
 (def buckle-end-length 5)
+(def buckle-end-width (- buckle-width (* 2 buckle-thickness)))
 (def buckle-height 4)
 (def palm-buckle-triangle (polygon [[0 triangle-length] [triangle-width 0] [0 0]]))
 (def palm-buckle-side (translate [0 (- (+ buckle-length buckle-end-length))]
@@ -1239,7 +1241,7 @@
                                 (mirror [1 0] palm-buckle-side))
                      ; Square in the middle
                      (translate [0 (- (+ buckle-length (/ buckle-end-length 2)))]
-                                (square (- buckle-width (* 2 buckle-thickness)) buckle-end-length))
+                                (square buckle-end-width buckle-end-length))
                      ; Bar at the end
                      (translate [0 (- (+ buckle-length buckle-end-length (/ buckle-thickness 2)))]
                                 (square (+ buckle-width (* 2 buckle-thickness)) buckle-thickness))))
@@ -1250,19 +1252,19 @@
                         (translate [(- (- (/ buckle-width 2) triangle-width)) 0 0]
 
                                    (mirror [1 0] (cube triangle-length 10 (+ buckle-height 0.5) :center false)))))
-(def palm-rod-top-length 55)
-(def palm-rod-bottom-length 10)
+(def palm-rod-top-length 40)
+(def palm-rod-bottom-length 10.5)
 (def palm-rod-length (+ palm-rod-top-length palm-rod-bottom-length))
 (def palm-attach-rod (union
-                      (translate [0 (- (+ (/ 3 2) buckle-length)) (- (/ palm-rod-length 2) palm-rod-bottom-length)]
-                                 (cube buckle-width 3 palm-rod-length))
+                      (translate [0 (- (+ (/ 5 2) buckle-length)) (- (/ palm-rod-length 2) palm-rod-bottom-length)]
+                                 (cube buckle-end-width 5 palm-rod-length))
                       palm-buckle))
 
 (def palm-support-angle (+ tenting-angle (deg2rad 14)))
 (def positioned-palm-support (->> palm-support
-                                  (rotate (deg2rad 20) [1 0 0])
+                                  (rotate (deg2rad 10) [1 0 0])
                                   (rotate palm-support-angle [0 1 0])
-                                  (translate [-2 -30 (- palm-rod-top-length 20)]
+                                  (translate [2 -30 (- palm-rod-top-length 22)]
                                              )))
 (def palm-rest (union
                 positioned-palm-support
@@ -1278,6 +1280,9 @@
                            write-scad palm-rest
                            ))
 
+(spit "things/palm-attach-test.scad" (write-scad
+                                       palm-attach-rod
+                                       ))
 
 
 (def model-right-initial
