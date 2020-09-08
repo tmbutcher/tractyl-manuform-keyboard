@@ -29,7 +29,7 @@
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
                                (= column 3) [0 -1 -4]
-                               (>= column 4) [0 -14 -5.50]            ; original [0 -5.8 5.64]
+                               (>= column 4) [0 -16 -5.50]            ; original [0 -5.8 5.64]
                                :else [0 -5 1.5]))
 
 (def thumb-offsets [6 0 10])
@@ -322,36 +322,36 @@
 
 (defn thumb-tr-place [shape]
       (->> shape
-           (rotate (deg2rad  -7) [1 0 0])
+           (rotate (deg2rad  -12) [1 0 0])
            (rotate (deg2rad -45) [0 1 0])
            (rotate (deg2rad  27) [0 0 1]) ; original 10
            (translate thumborigin)
-           (translate [-22 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
+           (translate [-21 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
 (def trackball-middle-translate [-7 6.5 -1.5])
-(def thumb-tip-offset [-33.5 -16 -5])
+(def thumb-tip-offset [-32.5 -16 -5])
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 (def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-tl-place [shape]
       (->> shape
-           (rotate (deg2rad  -11) [1 0 0])
-           (rotate (deg2rad -60) [0 1 0])
+           (rotate (deg2rad  -20) [1 0 0])
+           (rotate (deg2rad -57) [0 1 0])
            (rotate (deg2rad  35) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate tl-thumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-(def mr-thumb-loc (map + [-24 -35 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def mr-thumb-loc (map + [-25 -35 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
-           (rotate (deg2rad  -11) [1 0 0])
-           (rotate (deg2rad -60) [0 1 0])
+           (rotate (deg2rad  -20) [1 0 0])
+           (rotate (deg2rad -57) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
            (translate mr-thumb-loc)))
 
-(def br-thumb-loc (map + [-34 -42 -20] (if trackball-enabled [2 -10 2] [0 0 0])))
+(def br-thumb-loc (map + [-36 -42 -20] (if trackball-enabled [2 -10 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
-           (rotate (deg2rad   -15) [1 0 0])
+           (rotate (deg2rad   -22) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  40) [0 0 1])
            (translate thumborigin)
@@ -360,7 +360,7 @@
 (def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-bl-place [shape]
       (->> shape
-           (rotate (deg2rad   -15) [1 0 0])
+           (rotate (deg2rad   -22) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  37) [0 0 1])
            (translate thumborigin)
@@ -887,8 +887,7 @@
     key-clearance
     thumb-key-clearance
     (translate trackball-origin rotated-bottom-trim)
-    (translate trackball-origin rotated-dowells)
-    (translate trackball-origin trackball-insertion-cyl))))
+    (translate trackball-origin rotated-dowells))))
 
 (def case-walls
   (union
@@ -970,7 +969,7 @@
 
 (def usb-holder-position (map + [5 16 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
 (def usb-holder-cube   (cube 18.5 37 2))
-(def usb-holder-holder (translate (map + usb-holder-position [5 -14 0]) (difference (cube 21 39 4) (translate [0 0 1] usb-holder-cube))))
+(def usb-holder-holder (translate (map + usb-holder-position [5 -12.3 0]) (difference (cube 21 39 4) (translate [0 0 1] usb-holder-cube))))
 
 (def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
 
@@ -1221,7 +1220,9 @@
 
 (def triangle-length 7)
 (def triangle-width 5)
-(def buckle-width 16)
+; Make the buckle holes 2mm longer because the holes to the case aren't perfectly straight, which causes some problems.
+(def buckle-width-adjust 2)
+(def buckle-width 14)
 (def buckle-thickness 3)
 (def buckle-length 3.7)
 (def buckle-end-length 5)
@@ -1247,12 +1248,12 @@
                                 (square (+ buckle-width (* 2 buckle-thickness)) buckle-thickness))))
 (def palm-buckle (extrude-linear { :height buckle-height } palm-buckle-2d))
 (def palm-buckle-holes (union
-                        (translate [(- (/ buckle-width 2) triangle-width) 0 0]
+                        (translate [(- (/ (+ buckle-width buckle-width-adjust) 2) triangle-width) 0 0]
                                    (cube triangle-length 10 (+ buckle-height 0.5) :center false))
-                        (translate [(- (- (/ buckle-width 2) triangle-width)) 0 0]
+                        (translate [(- (- (/ (+ buckle-width buckle-width-adjust) 2) triangle-width)) 0 0]
 
                                    (mirror [1 0] (cube triangle-length 10 (+ buckle-height 0.5) :center false)))))
-(def palm-rod-top-length 40)
+(def palm-rod-top-length 44)
 (def palm-rod-bottom-length 10.5)
 (def palm-rod-length (+ palm-rod-top-length palm-rod-bottom-length))
 (def palm-attach-rod (union
@@ -1260,10 +1261,10 @@
                                  (cube buckle-end-width 5 palm-rod-length))
                       palm-buckle))
 
-(def palm-support-angle (+ tenting-angle (deg2rad 14)))
 (def positioned-palm-support (->> palm-support
-                                  (rotate (deg2rad 10) [1 0 0])
-                                  (rotate palm-support-angle [0 1 0])
+                                  (rotate (deg2rad 20) [0 0 1])
+                                  (rotate (deg2rad 5) [1 0 0])
+                                  (rotate (+ tenting-angle (deg2rad 14)) [0 1 0])
                                   (translate [2 -30 (- palm-rod-top-length 22)]
                                              )))
 (def palm-rest (union
@@ -1303,6 +1304,7 @@
                 usb-jack
                 trrs-holder-hole
                 screw-insert-holes
+                (if trackball-enabled (translate trackball-origin trackball-insertion-cyl) nil)
                 (translate palm-hole-origin (palm-rest-hole-rotate palm-buckle-holes))))
    (translate [0 0 -20] (cube 350 350 40))))
 
@@ -1375,7 +1377,7 @@
       (write-scad
        (difference
         (union
-         hand-on-test
+;         hand-on-test
          model-right
          (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
                     (palm-rest-hole-rotate palm-rest))
@@ -1387,11 +1389,12 @@
 
 (spit "things/right.scad" (write-scad (difference
                                         model-right
-;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
-;                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
-;                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
-;                                       (translate (key-position 4 0 [-10 17 0]) (cube 40 32 200))
+                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
+                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
+                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
+                                       (translate (key-position 4 0 [-10 24 0]) (cube 80 32 200))
 ;                                       (translate (key-position 4 0 [7 10 0]) (cube 35 40 200))
+                                       (translate (key-position 4 3 [0 0 0]) (cube 80 40 200))
                                        )))
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
