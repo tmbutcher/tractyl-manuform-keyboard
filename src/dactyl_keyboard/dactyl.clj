@@ -819,19 +819,20 @@
 (def hotswap-tester (hotswap-place unified-pin-hotswap-mount))
 (def single-hotswap-clearance
   (->>
-   (cube (+ socket-width 2) (+ hotswap-buckle-length 2) (+ socket-height 2))
-   (translate [0 (/ (+ hotswap-buckle-length 1) -2) -0.5])
+   (cube (+ socket-width 4) (+ hotswap-buckle-length 4) (+ socket-height 3))
+   (translate [0 (+ distance-from-socket) -1.5])
    (translate [0 (- hotswap-buckle-length) 0])
    position-socket-clamp
    (rotate (deg2rad 180) [0 0 1])
    (translate
-                         [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- (- (+ socket-height plate-thickness) 1))]
+    [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- socket-height)]
                         )))
 (def hotswap-clearance (hotswap-place single-hotswap-clearance))
 
 (spit "things/hotswap.scad" (write-scad (union hotswap-clamp-key-mount (position-socket-clamp (translate [0 (- (- hotswap-buckle-length pin-offset)) 0] hotswap-socket)))))
 (spit "things/hotswap-on-key-test.scad" (write-scad (union
                                                      buckle-holes-on-key
+                                                     (color [220/255 120/255 120/255 1] single-hotswap-clearance)
                                                      unified-pin-hotswap-mount
                                                      single-plate)))
 (spit "things/hotswap-clamp.scad" (write-scad hotswap-clamp-key-mount))
@@ -917,7 +918,7 @@
                             ))
 
 (defn clearance [extrax extray extraz]
-  (translate [0 0 (- (/ extraz 2) (/ plate-thickness 2))]
+  (translate [0 0 (/ extraz 2)]
              (cube (+ keyswitch-width extrax) (+ keyswitch-width extray) extraz)
              )
   )
@@ -926,6 +927,11 @@
                           (thumb-1x-layout (clearance 0 0 30))
                           (thumb-15x-layout (rotate (/ π 2) [0 0 1] (clearance 2.5 2.5 30)))))
 
+(def trackball-hotswap-clearance
+                                   (union
+                                    (key-place 0 2 single-hotswap-clearance)
+                                    (key-place 1 2 single-hotswap-clearance)
+                                    (key-place 2 3 single-hotswap-clearance)))
 (def key-clearance (union
                     (apply union
                           (for [column columns
@@ -934,10 +940,7 @@
                                           (not= row lastrow))]
                             (->> (clearance keyswitch-width keyswitch-width 30)
                                  (key-place column row))))
-                    (->> single-hotswap-clearance
-                         (key-place 0 2))
-                    (->> single-hotswap-clearance
-                         (key-place 1 2))))
+                    trackball-hotswap-clearance))
 
 (defn trackball-mount-rotate [thing] (rotate (deg2rad -12) [0 0 1]
                                              (rotate (deg2rad 34) [1 0 0]
@@ -1383,12 +1386,14 @@
            (for [y (range 0 lastrow)] (hull (cut (key-wall-brace lastcol y 1 0 tr lastcol y 1 0 br)) hull-with))
            (for [y (range 1 lastrow)] (hull (cut (key-wall-brace lastcol (dec y) 1 0 br lastcol y 1 0 tr) ) hull-with))
            (hull (cut (key-wall-brace lastcol cornerrow 0 -1 br lastcol cornerrow 1 0 br)) hull-with))))
+
 (def bottom-plate-thickness 2)
 (def plate-attempt (difference
                     (extrude-linear {:height bottom-plate-thickness}
                                     (union
                                      ; pro micro wall
                                      (for [x (range 0 (- ncols 1))] (hull  (cut (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr)) (translate (key-position x lastrow [0 0 0]) (square (+ keyswitch-width 15) keyswitch-height))))
+                                     (for [x (range 1 ncols)] (hull (cut (key-wall-brace x 0 0 1 web-post-tl (dec x) 0 0 1 web-post-tr)) (translate (key-position x 2 [0 0 0]) (square 1 1))))
                                      (hull (cut back-pinky-wall) (translate (key-position lastcol 0 [0 0 0]) (square keyswitch-width keyswitch-height)))
                                      (hull (cut thumb-walls) (translate bl-thumb-loc (square 1 1)))
                                      right-wall-plate
@@ -1623,6 +1628,7 @@
                   (translate thumb-tent-origin tent-thread)
                   (translate index-tent-origin tent-thread)
                   (translate [0 0 -22] (cube 350 350 40))
+                  usb-jack
                   trrs-holder-hole
                   model-right ; Just rm the whole model-right to make sure there's no obstruction
                   ))
@@ -1661,12 +1667,13 @@
       (write-scad
        (difference
         (union
-         hand-on-test
-         hotswap-tester
+;         hand-on-test
+         (color [220/255 120/255 120/255 1] hotswap-tester)
+         (color [220/255 163/255 163/255 1] right-plate)
          model-right
 ;         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
 ;                    (palm-rest-hole-rotate palm-rest))
-         (if trackball-enabled (translate trackball-origin test-ball) nil)
+;         (if trackball-enabled (translate trackball-origin test-ball) nil)
          thumbcaps
          caps)
 
@@ -1676,8 +1683,7 @@
                            (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
                            (union
                                         model-right
-;                                       (color [220/255 163/255 163/255 1] right-plate)
-;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
+                            ;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
 ;                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
 ;                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
 ;                                       (translate (key-position 4 0 [-10 24 0]) (cube 80 32 200))
