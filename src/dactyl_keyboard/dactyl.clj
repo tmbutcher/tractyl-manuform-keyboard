@@ -56,6 +56,7 @@
 ; If you use Cherry MX or Gateron switches, this can be turned on.
 ; If you use other switches such as Kailh, you should set this as false
 (def create-side-nubs? false)
+(def create-top-nubs? false)
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; General variables ;;
@@ -110,9 +111,10 @@
                 (->> plate-half
                      (mirror [1 0 0])
                      (mirror [0 1 0])))
-         (->>
+        (if create-top-nubs?
+          (->>
            top-nub-pair
-           (rotate (/ π 2) [0 0 1])))))
+           (rotate (/ π 2) [0 0 1])) nil))))
 
 ;;;;;;;;;;;;;;;;
 ;; SA Keycaps ;;
@@ -327,13 +329,13 @@
            (rotate (deg2rad  27) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate [-21 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
-(def trackball-middle-translate [-7 4 -1.5])
-(def thumb-tip-offset [-32.5 -16 -5])
+(def trackball-middle-translate [-5 7 -0.5])
+(def thumb-tip-offset [-33 -16 -6.5])
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 (def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-tl-place [shape]
       (->> shape
-           (rotate (deg2rad  -16) [1 0 0])
+           (rotate (deg2rad  -12) [1 0 0])
            (rotate (deg2rad -54) [0 1 0])
            (rotate (deg2rad  35) [0 0 1]) ; original 10
            (translate thumborigin)
@@ -342,7 +344,7 @@
 (def mr-thumb-loc (map + [-25 -37.5 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
-           (rotate (deg2rad  -16) [1 0 0])
+           (rotate (deg2rad  -12) [1 0 0])
            (rotate (deg2rad -54) [0 1 0])
            (rotate (deg2rad  35) [0 0 1])
            (translate thumborigin)
@@ -351,7 +353,7 @@
 (def br-thumb-loc (map + [-36 -44 -20] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
-           (rotate (deg2rad   -22) [1 0 0])
+           (rotate (deg2rad   -18) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  37) [0 0 1])
            (translate thumborigin)
@@ -360,7 +362,7 @@
 (def bl-thumb-loc (map + [-44 -23 -24] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-bl-place [shape]
       (->> shape
-           (rotate (deg2rad   -22) [1 0 0])
+           (rotate (deg2rad   -18) [1 0 0])
            (rotate (deg2rad -55) [0 1 0])
            (rotate (deg2rad  37) [0 0 1])
            (translate thumborigin)
@@ -641,53 +643,54 @@
                        nil))]
     (extrude-linear { :height buckle-height } palm-buckle-2d)))
 
-(defn buckle-holes [& {:keys [buckle-thickness buckle-width buckle-width-adjust triangle-length triangle-width buckle-height]}]
+(defn buckle-holes [& {:keys [buckle-thickness buckle-length buckle-width buckle-width-adjust triangle-length triangle-width buckle-height]}]
   (let [hole-x-translate (- (/ (+ buckle-width buckle-width-adjust) 2) (- triangle-width buckle-thickness) 0.2)]
     (union
      (translate [hole-x-translate 0 0]
                 (cube (+ triangle-width 0.5) 10 (+ buckle-height 0.5) :center false))
+     (translate [(+ hole-x-translate (- triangle-width buckle-thickness)) buckle-length 0] ; clear out some space on the other end of the buckle
+                (cube (+ triangle-width 0.25) 2 (+ buckle-height 0.5) :center false))
      (translate [(- hole-x-translate) 0 0]
-                (mirror [1 0] (cube (+ triangle-width 0.5) 10 (+ buckle-height 0.5) :center false))))))
+                (mirror [1 0] (cube (+ triangle-width 0.5) 10 (+ buckle-height 0.5) :center false)))
+     (translate [(- (- hole-x-translate) (- triangle-width buckle-thickness)) buckle-length 0] ;clear out some space on the other end of the buckle
+                (mirror [1 0] (cube (+ triangle-width 0.25) 2 (+ buckle-height 0.5) :center false))))))
 
 ;;;;;;;;;;;;;
 ;; Hotswap ;;
 ;;;;;;;;;;;;;
 
-(def pin-cutout-height 3)
-(def pin-height 11)
-(def fillin-thickness 1.3)
-(defn pin-slight-rotation [pin] (translate [0 0.7 0] (rotate(deg2rad 10) [1 0 0] pin)))
-(def socket-pin-square
-  (rotate (deg2rad 90) [1 0 0] (translate [0 6.5 (/ pin-cutout-height 2)] (cube 3 2.5 pin-cutout-height))))
-(def socket-pin  (union
-                                              socket-pin-square
-                  (rotate (deg2rad 90) [1 0 0] (translate [(/ 1.3 -2) 0 fillin-thickness] (cube 1.3 pin-height (- pin-cutout-height fillin-thickness) :center false)))))
+(def pin-cutout-height 0.7)
+(def pin-offset 1.7)
+(def socket-pin  (translate [0 (/ pin-cutout-height 2) 0] (union
+                  (translate [0 0 2] (cube 0.8 pin-cutout-height 4))
+                  (translate [0 0 (+ 4 3)] (cube 2.2 pin-cutout-height 6 ))
+                  (translate [0 0 (+ 10 0.5)] (cube 0.8 pin-cutout-height 1 )))))
 ;; Hotswap socket test
 (def socket-distance 5.5)
-(def socket-height 5.6)
+(def socket-height 6.5)
 (def socket-width (+ socket-distance 4))
-(def hotswap-buckle-length 4.2)
+(def hotswap-buckle-length 4)
 (def hotswap-top-wire-length 2.8)
 (def grip-length 1)
 (defn pins-place [socket-pin]
   (union
-   (translate [(- (/ socket-distance 2)) pin-cutout-height -8.1] socket-pin)
-   (translate [(/ socket-distance 2) pin-cutout-height -8.1] socket-pin))
+   (translate [(- (/ socket-distance 2)) 0 (- -4 (/ socket-height 2))] socket-pin)
+   (translate [(/ socket-distance 2) 0 (- -4 (/ socket-height 2))] socket-pin))
   )
 (def hotswap-socket-pins (pins-place socket-pin))
 (def socket-join-height (- socket-height 3))
 (def hotswap-clamp
   (let[grip-width    2
-       grip-height 2
+       grip-height 4
        grip            (polygon [[0 0] [grip-width 0] [grip-width grip-length] [0 grip-length]])
        thickness 1
        width (+ socket-width 0.25) ; give some wiggle room
-       length (+ hotswap-buckle-length 0.25) ; give some wiggle room
+       length (+ hotswap-buckle-length 0.15) ; give some wiggle room
        grip-offset     (+ (/ width 2) thickness)
        flat-model (union
                                          (translate [(/ width 2) (- length)] (square thickness length :center false))
                                          (translate [(/ width -2) (- length)] (mirror [1 0] (square thickness length :center false)))
-                                         (translate [0 (- (+ length (/ thickness 2)))] (square (+ width (* 2 thickness)) thickness)))
+                                         (translate [0 (+ (- (+ length (/ thickness 2))) (/ pin-offset 2))] (square (+ width (* 2 thickness)) (+ thickness pin-offset))))
        flat-grip-model (union
                                               (translate [(- grip-offset) 0] grip)
                                               (translate [grip-offset 0] (mirror [1 0] grip)))]
@@ -699,19 +702,17 @@
                                  bottom-length (+ length thickness grip-length)]
                              (difference
                               (translate [0 (+ (/ bottom-length -2) grip-length) (- (/ socket-height -2) (/ thickness 2))] (cube bottom-width bottom-length thickness))
-                              (translate [0 (- hotswap-buckle-length) 0] (pin-slight-rotation hotswap-socket-pins)))))))
-(def insert-path (translate [0 (/ 1.3 2) 0] (cube 1.3 1.3 pin-height)))
-(def insert-path-x-offset (/ socket-distance 2))
+                              (translate [0 (- (- length pin-offset)) 0] hotswap-socket-pins))))))
 (def hotswap-socket (difference
-                     (translate [0 (/ hotswap-buckle-length 2) 0] (cube socket-width hotswap-buckle-length socket-height))
-                     (pin-slight-rotation hotswap-socket-pins)
+                     (translate [0 (/ (- hotswap-buckle-length pin-offset) 2) 0] (cube socket-width (- hotswap-buckle-length pin-offset) socket-height))
+                     hotswap-socket-pins
 ;                     (translate [insert-path-x-offset 0.7 0] insert-path)
 ;                     (translate [(- insert-path-x-offset) 0.7 0] insert-path)
-                     (translate [0 -1.5 0] (pins-place socket-pin-square))
+;                     (translate [0 -1.5 0] (pins-place socket-pin-square))
                      ))
 
 
-(def plate-mount-buckle-width (- keyswitch-width 5))
+(def plate-mount-buckle-width (- keyswitch-width 4))
 (defn position-socket-clamp [shape] (->>
                                      shape
                                      (translate [0 hotswap-buckle-length 0])
@@ -731,21 +732,21 @@
    (->>
     (buckle
      :include-middle      false
-     :triangle-length     2.5
-     :triangle-width      4
+     :triangle-length     1.75
+     :triangle-width      3.4
      :buckle-width-adjust 0
      :buckle-width        plate-mount-buckle-width
-     :buckle-thickness    2
-     :buckle-length       (+ socket-height plate-thickness)
+     :buckle-thickness    1.8
+     :buckle-length       (+ socket-height plate-thickness -0.1) ; Remove some length to make less wiggle room
      :buckle-end-length   0
-     :buckle-height       plate-mount-buckle-height)
+     :buckle-height       (+ plate-mount-buckle-height 0.35)) ; Add more thickness than the holes to account for wanting no wiggle room
     (rotate (deg2rad 90) [1 0 0])
     (translate [0  clamp-buckle-y-offset (+ socket-height plate-thickness)]))
    ; Connect the left buckle to the socket
    (hull
     (translate [(- (/ plate-mount-buckle-width -2) -3.5) -1.2 (/ socket-join-height 2)]
                (rotate (deg2rad -30) [0 0 1] (cube 7 0.1 socket-join-height)))
-    (translate [(- (/ plate-mount-buckle-width -2) 1) clamp-buckle-y-offset (/ socket-join-height 2)]
+    (translate [(- (/ plate-mount-buckle-width -2) 0) clamp-buckle-y-offset (/ socket-join-height 2)]
                (cube 2 plate-mount-buckle-height socket-join-height))
     )
    ; Connect the right buckle to the socket
@@ -763,17 +764,18 @@
 (def buckle-hole-y-translate (+ (/ keyswitch-height 2) plate-mount-buckle-height distance-from-socket))
 (def buckle-holes-on-key (->>
                           (buckle-holes
-                           :buckle-thickness 2
+                           :buckle-thickness 1.8
                            :buckle-width plate-mount-buckle-width
                            :buckle-width-adjust 0
-                           :triangle-width 4
-                           :triangle-length 2.5
+                           :buckle-length (+ socket-height plate-thickness)
+                           :triangle-width 3.4
+                           :triangle-length 1.75
                            :buckle-height plate-mount-buckle-height)
                           (rotate (deg2rad 90) [1 0 0])
-                          (translate [0 buckle-hole-y-translate -5])))
+                          (translate [0 buckle-hole-y-translate (+ (- socket-height))])))
 (def single-plate-with-hotswap (difference
-                                (translate [0 2 0] (cube (+ keyswitch-width 4) (+ keyswitch-height 7) 3))
-                                (cube keyswitch-width keyswitch-height 3)
+                                (translate [0 2 (/ plate-thickness 2)] (cube (+ keyswitch-width 4) (+ keyswitch-height 7) 3))
+                                (translate [0 0 (/ plate-thickness 2)] (cube keyswitch-width keyswitch-height 3))
                                 buckle-holes-on-key))
 
 (defn hotswap-place [hotswap] (let [
@@ -803,15 +805,15 @@
 (def hotswap-holes (hotswap-place buckle-holes-on-key))
 
 (def unified-pin-hotswap-mount (translate
-                                [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- (- (+ socket-height plate-thickness) 1))]
+                                [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- socket-height)]
                                 (rotate (deg2rad 180) [0 0 1]
                                         (union
                                          hotswap-clamp-key-mount
                                          (->>
                                           (union
-                                           (pin-slight-rotation hotswap-socket-pins)
+                                           hotswap-socket-pins
                                            hotswap-socket)
-                                          (translate [0 (- hotswap-buckle-length) 0])
+                                          (translate [0 (- (- hotswap-buckle-length pin-offset)) 0])
                                           position-socket-clamp)))))
 
 (def hotswap-tester (hotswap-place unified-pin-hotswap-mount))
@@ -827,11 +829,11 @@
                         )))
 (def hotswap-clearance (hotswap-place single-hotswap-clearance))
 
-
-(spit "things/hotswap.scad" (write-scad (union hotswap-clamp-key-mount (position-socket-clamp (translate [0 (- hotswap-buckle-length) 0] hotswap-socket)))))
+(spit "things/hotswap.scad" (write-scad (union hotswap-clamp-key-mount (position-socket-clamp (translate [0 (- (- hotswap-buckle-length pin-offset)) 0] hotswap-socket)))))
 (spit "things/hotswap-on-key-test.scad" (write-scad (union
+                                                     buckle-holes-on-key
                                                      unified-pin-hotswap-mount
-                                                     single-plate-with-hotswap)))
+                                                     single-plate)))
 (spit "things/hotswap-clamp.scad" (write-scad hotswap-clamp-key-mount))
 (spit "things/hotswap-socket.scad" (write-scad hotswap-socket))
 (spit "things/socket-on-key.scad" (write-scad single-plate-with-hotswap))
@@ -915,7 +917,7 @@
                             ))
 
 (defn clearance [extrax extray extraz]
-  (translate [0 0 (/ 30 2)]
+  (translate [0 0 (- (/ extraz 2) (/ plate-thickness 2))]
              (cube (+ keyswitch-width extrax) (+ keyswitch-width extray) extraz)
              )
   )
@@ -942,7 +944,7 @@
                                                      (rotate (deg2rad -39) [0 1 0] thing))
                                              ))
 
-(def sensor-length 28)
+(def sensor-length 28.5)
 (def sensor-width 22)
 (def sensor-holder-width (/ sensor-width 2))
 (def sensor-height 7.5)
@@ -1093,125 +1095,144 @@
    ; merging with hulls to the trackball mount
    (difference
     (union
-     ; Back right thumb to the middle one
-     (triangle-hulls
-      (thumb-mr-place web-post-br)
-      (thumb-mr-place web-post-bl)
-      (thumb-br-place web-post-br))
      ; Thumb to rest of case
      (bottom-hull
       (bottom 25 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
       ;             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
       (thumb-bl-place web-post-tr)
-      (thumb-bl-place web-post-tl))
-     ; Trackball mount to left outside of case
-     (hull
-      (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post))
-      case-filler-cup)
-     ; Gap between trackball mount and top key
-     (hull
-      (key-place 0 cornerrow web-post-bl)
-      (key-place 0 cornerrow web-post-br)
-      (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
-     ; Between the trackball and the outside of the case near the bottom, to ensure a nice seal
-     (hull
-      (bottom 25 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
-      (translate trackball-origin (trackball-mount-rotate cup))))
+      (thumb-bl-place web-post-tl)))
     key-clearance
     thumb-key-clearance
     (translate trackball-origin rotated-bottom-trim)
     (translate trackball-origin rotated-dowells))))
 
-(def trackball-tweeners (union
-  (wall-brace thumb-mr-place  0 -1 web-post-br thumb-br-place  0 -1 web-post-br)
-  (wall-brace thumb-bl-place -1  0 web-post-bl thumb-br-place -1  0 web-post-tl)
-  (wall-brace thumb-tr-place  0 -1 thumb-post-br (partial key-place 3 lastrow)  0 -1 web-post-bl)))
+(def trackball-to-case (difference (union
+                        ; Trackball mount to left outside of case
+                        (hull
+                         (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post))
+                         case-filler-cup)
+                        ; Gap between trackball mount and top key
+                        (hull
+                         (key-place 0 cornerrow web-post-bl)
+                         (key-place 0 cornerrow web-post-br)
+                         (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
+                        ; Between the trackball and the outside of the case near the bottom, to ensure a nice seal
+                        (hull
+                         (bottom 25 (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) big-boi-web-post)))
+                         (translate trackball-origin (trackball-mount-rotate cup))))
+                                   (translate trackball-origin rotated-dowells)
+                                   (translate trackball-origin rotated-bottom-trim)))
 
+(def thumb-to-left-wall (union
+                         ; clunky bit on the top left thumb connection  (normal connectors don't work well)
+                         (bottom-hull
+                          (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
+                          (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
+                          (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+                          (thumb-bl-place (translate (wall-locate3 -3 1) web-post-tr)))
+                         (hull
+                          (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
+                          (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
+                          (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
+                          (thumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
+                          (thumb-tl-place web-post-tl))
+                         (hull
+                          (left-key-place cornerrow -1 web-post)
+                          (left-key-place cornerrow -1 (translate (wall-locate1 -1 0) web-post))
+                          (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
+                          (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
+                          (thumb-tl-place web-post-tl))
+                         (hull
+                          (left-key-place cornerrow -1 web-post)
+                          (left-key-place cornerrow -1 (translate (wall-locate1 -1 0) web-post))
+                          (key-place 0 cornerrow web-post-bl)
+                          (thumb-tl-place web-post-tl))
+                         (hull
+                          (thumb-bl-place web-post-tr)
+                          (thumb-bl-place (translate (wall-locate1 -0.3 1) web-post-tr))
+                          (thumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
+                          (thumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
+                          (thumb-tl-place web-post-tl))
+                         ; Tiny little piece leading to the left
+                         (wall-brace thumb-bl-place  0  1 web-post-tr thumb-bl-place  0  1 web-post-tl)
+                         ))
+
+; NOTE: Using -1.5 instead of -1 to make these a bit bigger to make room for the hotswaps
+(def trackball-tweeners (union
+                         (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-br-place  0 -1 web-post-br)))
+(def back-convex-thumb-wall-0 ; thumb tweeners
+  (if trackball-enabled
+    trackball-tweeners
+    (union
+     (wall-brace thumb-mr-place  0 -1.5 web-post-bl thumb-br-place  0 -1 web-post-br))))
+(def back-convex-thumb-wall-1 (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-tr-place 0 -1.5 thumb-post-br))
+(def back-convex-thumb-wall-2 (if trackball-enabled
+                                ; Back right thumb to the middle one
+                                (triangle-hulls
+                                 (thumb-mr-place web-post-br)
+                                 (thumb-mr-place web-post-bl)
+                                 (thumb-br-place web-post-br))
+                                (union
+                                                         (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-mr-place  0 -1.5 web-post-bl))))
+(def thumb-walls  ; thumb walls
+  (union
+   (wall-brace thumb-bl-place -1  0 web-post-bl thumb-br-place -1  0 web-post-tl)
+   (wall-brace thumb-br-place  0 -1 web-post-br thumb-br-place  0 -1 web-post-bl)
+   (wall-brace thumb-br-place -1  0 web-post-tl thumb-br-place -1  0 web-post-bl)
+   (wall-brace thumb-bl-place -1  0 web-post-tl thumb-bl-place -1  0 web-post-bl)))
+
+(def thumb-corners ; thumb corners
+  (union
+  (wall-brace thumb-br-place -1  0 web-post-bl thumb-br-place  0 -1 web-post-bl)
+   (if trackball-enabled nil (wall-brace thumb-bl-place -1  0 web-post-tl thumb-bl-place  0  1 web-post-tl))
+   ))
+
+(def pro-micro-wall (union
+                     (for [x (range 0 ncols)] (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr))
+                     (for [x (range 1 ncols)] (key-wall-brace x 0 0 1 web-post-tl (dec x) 0 0 1 web-post-tr))
+  ))
+(def back-pinky-wall (for [x (range 4 ncols)] (key-wall-brace x cornerrow 0 -1 web-post-bl x       cornerrow 0 -1 web-post-br)))
+(def non-thumb-walls (union
+                            ; left wall
+                            (for [y (range 0 lastrow)] (union (wall-brace (partial left-key-place y 1)       -1 0 web-post (partial left-key-place y -1) -1 0 web-post)
+                                                              (hull (key-place 0 y web-post-tl)
+                                                                    (key-place 0 y web-post-bl)
+                                                                    (left-key-place y  1 web-post)
+                                                                    (left-key-place y -1 web-post))))
+                            (for [y (range 1 lastrow)] (union (wall-brace (partial left-key-place (dec y) -1) -1 0 web-post (partial left-key-place y  1) -1 0 web-post)
+                                                              (hull (key-place 0 y       web-post-tl)
+                                                                    (key-place 0 (dec y) web-post-bl)
+                                                                    (left-key-place y        1 web-post)
+                                                                    (left-key-place (dec y) -1 web-post))))
+                            (wall-brace (partial key-place 0 0) 0 1 web-post-tl (partial left-key-place 0 1) 0 1 web-post)
+                            (wall-brace (partial left-key-place 0 1) 0 1 web-post (partial left-key-place 0 1) -1 0 web-post)
+                            ; front wall
+                            (key-wall-brace 3 lastrow   0 -1 web-post-bl 3 lastrow 0.5 -1 web-post-br)
+                            (key-wall-brace 3 lastrow 0.5 -1 web-post-br 4 cornerrow 0.5 -1 web-post-bl)
+
+;                            (for [x (range 5 ncols)] (key-wall-brace x cornerrow 0 -1 web-post-bl (dec x) cornerrow 0 -1 web-post-br))
+                            ; Right before the start of the thumb
+                            (wall-brace thumb-tr-place  0 -1 thumb-post-br (partial key-place 3 lastrow)  0 -1 web-post-bl)))
 (def case-walls
   (union
-    right-wall
-    ; back wall
-    (for [x (range 0 ncols)] (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr))
-    (for [x (range 1 ncols)] (key-wall-brace x 0 0 1 web-post-tl (dec x) 0 0 1 web-post-tr))
-
-    ; left wall
-    (for [y (range 0 lastrow)] (union (wall-brace (partial left-key-place y 1)       -1 0 web-post (partial left-key-place y -1) -1 0 web-post)
-                                      (hull (key-place 0 y web-post-tl)
-                                            (key-place 0 y web-post-bl)
-                                            (left-key-place y  1 web-post)
-                                            (left-key-place y -1 web-post))))
-    (for [y (range 1 lastrow)] (union (wall-brace (partial left-key-place (dec y) -1) -1 0 web-post (partial left-key-place y  1) -1 0 web-post)
-                                      (hull (key-place 0 y       web-post-tl)
-                                            (key-place 0 (dec y) web-post-bl)
-                                            (left-key-place y        1 web-post)
-                                            (left-key-place (dec y) -1 web-post))))
-    (wall-brace (partial key-place 0 0) 0 1 web-post-tl (partial left-key-place 0 1) 0 1 web-post)
-    (wall-brace (partial left-key-place 0 1) 0 1 web-post (partial left-key-place 0 1) -1 0 web-post)
-    ; front wall
-    (key-wall-brace 3 lastrow   0 -1 web-post-bl 3 lastrow 0.5 -1 web-post-br)
-    (key-wall-brace 3 lastrow 0.5 -1 web-post-br 4 cornerrow 0.5 -1 web-post-bl)
-    (for [x (range 4 ncols)] (key-wall-brace x cornerrow 0 -1 web-post-bl x       cornerrow 0 -1 web-post-br)) ; TODO fix extra wall
-    (for [x (range 5 ncols)] (key-wall-brace x cornerrow 0 -1 web-post-bl (dec x) cornerrow 0 -1 web-post-br))
-    ; thumb walls
-    (wall-brace thumb-mr-place  0 -1 web-post-br thumb-tr-place  0 -1 thumb-post-br)
-   ;  TODO
-    (if trackball-enabled nil (wall-brace thumb-mr-place  0 -1 web-post-br thumb-mr-place  0 -1 web-post-bl))
-    (wall-brace thumb-br-place  0 -1 web-post-br thumb-br-place  0 -1 web-post-bl)
-    (wall-brace thumb-bl-place  0  1 web-post-tr thumb-bl-place  0  1 web-post-tl)
-    (wall-brace thumb-br-place -1  0 web-post-tl thumb-br-place -1  0 web-post-bl)
-    (wall-brace thumb-bl-place -1  0 web-post-tl thumb-bl-place -1  0 web-post-bl)
-    ; thumb corners
-    (wall-brace thumb-br-place -1  0 web-post-bl thumb-br-place  0 -1 web-post-bl)
-    (wall-brace thumb-bl-place -1  0 web-post-tl thumb-bl-place  0  1 web-post-tl)
-    ; thumb tweeners
-   (if trackball-enabled
-     trackball-tweeners
-     (union
-      (wall-brace thumb-mr-place  0 -1 web-post-bl thumb-br-place  0 -1 web-post-br)
-      (wall-brace thumb-bl-place -1  0 web-post-bl thumb-br-place -1  0 web-post-tl)
-      (wall-brace thumb-tr-place  0 -1 thumb-post-br (partial key-place 3 lastrow)  0 -1 web-post-bl)))
-   (if
-     trackball-enabled
-     trackball-walls
-     (union
-        ; clunky bit on the top left thumb connection  (normal connectors don't work well)
-           (bottom-hull
-             (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
-             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
-             (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
-             (thumb-bl-place (translate (wall-locate3 -3 1) web-post-tr)))
-           (hull
-             (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
-             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
-             (thumb-bl-place (translate (wall-locate2 -2 1) web-post-tr))
-             (thumb-bl-place (translate (wall-locate3 -2 1) web-post-tr))
-             (thumb-tl-place web-post-tl))
-           (hull
-             (left-key-place cornerrow -1 web-post)
-             (left-key-place cornerrow -1 (translate (wall-locate1 -1 0) web-post))
-             (left-key-place cornerrow -1 (translate (wall-locate2 -1 0) web-post))
-             (left-key-place cornerrow -1 (translate (wall-locate3 -1 0) web-post))
-             (thumb-tl-place web-post-tl))
-           (hull
-             (left-key-place cornerrow -1 web-post)
-             (left-key-place cornerrow -1 (translate (wall-locate1 -1 0) web-post))
-             (key-place 0 cornerrow web-post-bl)
-             (thumb-tl-place web-post-tl))
-           (hull
-             (thumb-bl-place web-post-tr)
-             (thumb-bl-place (translate (wall-locate1 -0.3 1) web-post-tr))
-             (thumb-bl-place (translate (wall-locate2 -0.3 1) web-post-tr))
-             (thumb-bl-place (translate (wall-locate3 -0.3 1) web-post-tr))
-             (thumb-tl-place web-post-tl))
-       )
-     )
+   right-wall
+   back-pinky-wall
+   pro-micro-wall
+    non-thumb-walls
+   back-convex-thumb-wall-0
+   back-convex-thumb-wall-1
+   back-convex-thumb-wall-2
+    thumb-walls
+    thumb-corners
+   (if trackball-enabled nil thumb-to-left-wall)
+   back-convex-thumb-wall-0
    ))
 
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
 
 (def usb-holder-position (map + [5 16 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-cube   (cube 18.5 37 2))
-(def usb-holder-holder (translate (map + usb-holder-position [5 -12.3 0]) (difference (cube 21 39 4) (translate [0 0 1] usb-holder-cube))))
+(def usb-holder-cube   (cube 18.5 35.5 4))
+(def usb-holder-holder (translate (map + usb-holder-position [5 -12.9 0]) (difference (cube 21 39 6) (translate [0 0 1] usb-holder-cube))))
 
 (def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
 
@@ -1269,12 +1290,12 @@
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
       (union (screw-insert 0 0         bottom-radius top-radius height [7.5 7 0])
-             (screw-insert 0 lastrow   bottom-radius top-radius height [0 15 0])
+             (screw-insert 0 lastrow   bottom-radius top-radius height (if trackball-enabled [-2 33 0] [0 15 0]))
              ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
              (screw-insert lastcol lastrow  bottom-radius top-radius height [-3.5 17 0])
              (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height [-2.5 -16 0])))
+             (screw-insert 1 lastrow         bottom-radius top-radius height [1 -16 0])))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -1353,9 +1374,31 @@
    ))
 ;(def plate-attempt bigattempt)
 
+; Based on right-wall, just trying to make the plate cutout of it
+(def right-wall-plate
+  (let [tr (if (true? pinky-15u) wide-post-tr web-post-tr)
+        br (if (true? pinky-15u) wide-post-br web-post-br)
+        hull-with (translate (key-position 0 0 [0 0 0]) (square 1 1))]
+    (union (hull (cut (key-wall-brace lastcol 0 0 1 tr lastcol 0 1 0 tr)) hull-with)
+           (for [y (range 0 lastrow)] (hull (cut (key-wall-brace lastcol y 1 0 tr lastcol y 1 0 br)) hull-with))
+           (for [y (range 1 lastrow)] (hull (cut (key-wall-brace lastcol (dec y) 1 0 br lastcol y 1 0 tr) ) hull-with))
+           (hull (cut (key-wall-brace lastcol cornerrow 0 -1 br lastcol cornerrow 1 0 br)) hull-with))))
+(def bottom-plate-thickness 2)
 (def plate-attempt (difference
-                    (extrude-linear {:height 2}
-                                    bigattempt
+                    (extrude-linear {:height bottom-plate-thickness}
+                                    (union
+                                     ; pro micro wall
+                                     (for [x (range 0 (- ncols 1))] (hull  (cut (key-wall-brace x 0 0 1 web-post-tl x       0 0 1 web-post-tr)) (translate (key-position x lastrow [0 0 0]) (square (+ keyswitch-width 15) keyswitch-height))))
+                                     (hull (cut back-pinky-wall) (translate (key-position lastcol 0 [0 0 0]) (square keyswitch-width keyswitch-height)))
+                                     (hull (cut thumb-walls) (translate bl-thumb-loc (square 1 1)))
+                                     right-wall-plate
+                                     (hull (cut back-convex-thumb-wall-0) (translate bl-thumb-loc (square 1 1)))
+                                     (hull (cut back-convex-thumb-wall-1) (translate bl-thumb-loc (square 1 1)))
+                                     (hull (cut back-convex-thumb-wall-2) (translate bl-thumb-loc (square 1 1)))
+                                     (hull (cut thumb-corners))
+                                     (hull (cut thumb-to-left-wall) (translate (key-position (- lastcol 1) (- lastrow 1) [0 0 0]) (square 1 1)))
+                                     (hull (cut non-thumb-walls))
+                                      )
                                     )
                     (translate [0 0 -10] screw-insert-screw-holes)
                     ))
@@ -1364,15 +1407,6 @@
 (spit "things/test.scad"
       (write-scad
         (difference trrs-holder trrs-holder-hole)))
-
-(def trackball-mount-translated-to-model (difference
-   (translate trackball-origin
-              trackball-mount
-                                              )
-   ; Subtract out clearance so there's nothing above the keys
-   key-clearance
-   thumb-key-clearance
-   ))
 
 (def hand-on-test
   (translate [-5 -60 92]
@@ -1432,14 +1466,14 @@
                 (rotated-ball-hook 270)
                  ))
 
-(def thumb-tent-origin [-8 -70 -1])
-(def index-tent-origin [-48 17 -1])
+(def thumb-tent-origin [-22 -55 -1])
+(def index-tent-origin [-46 17 -1])
 
 (def tent-nut-height 6)
 (def tent-thread
-  (rotate (deg2rad 180) [0 1 0]
-          (call-module "thread" (+ tent-stand-rad 0.5) tent-nut-height tent-stand-thread-lead)
-          )
+  (translate [0 0 tent-nut-height] (rotate (deg2rad 180) [0 1 0]
+          (call-module "thread" (+ tent-stand-rad 0.5) (+ tent-nut-height bottom-plate-thickness) tent-stand-thread-lead)
+          ))
   )
 (def tent-nut (difference
                (translate [0 0 (/ tent-nut-height 2)] (cylinder (+ tent-stand-rad 1.5) tent-nut-height))
@@ -1457,8 +1491,8 @@
                    (translate [0 0 (- (- 100 palm-cutoff))] (cube 400 400 200))
                     )))
 
-(defn palm-rest-hole-rotate [h] (rotate (deg2rad -8) [0 0 1] h))
-(def palm-hole-origin (map + (key-position 3 (+ cornerrow 1) (wall-locate3 0 -1)) [-1.5 -8 -11]) )
+(defn palm-rest-hole-rotate [h] (rotate (deg2rad -3) [0 0 1] h))
+(def palm-hole-origin (map + (key-position 3 (+ cornerrow 1) (wall-locate3 0 -1)) [-1.5 -7 -11]) )
 
 (def triangle-length 7)
 (def triangle-width 5)
@@ -1482,6 +1516,7 @@
                   :buckle-height buckle-height
                    ))
 (def palm-buckle-holes (buckle-holes
+                        :buckle-length buckle-length
                         :buckle-thickness buckle-thickness
                         :buckle-width buckle-width
                         :buckle-width-adjust buckle-width-adjust
@@ -1521,7 +1556,17 @@
                                        palm-attach-rod
                                        ))
 
-(def model-right-initial
+
+(def trackball-subtract (union
+                         ; Subtract out the actual trackball
+                         (translate trackball-origin (dowell-angle raised-trackball))
+                         ; Subtract out space for the cup, because sometimes things from the keyboard creep in
+                         (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
+                         ; Just... double check that we have the full dowell negative
+                         (translate trackball-origin rotated-dowells)
+                         hotswap-clearance))
+
+(def model-right
   (difference
    (union
     key-holes
@@ -1532,33 +1577,29 @@
     thumb-connectors
     (difference (union
                  case-walls
-                 screw-insert-outers
-                 usb-holder-holder
-                 trrs-holder)
+                 screw-insert-outers)
                 ; Leave room to insert the ball
                 (if trackball-enabled (translate trackball-origin trackball-insertion-cyl) nil)
                 usb-jack
                 trrs-holder-hole
                 screw-insert-holes
                 (translate palm-hole-origin (palm-rest-hole-rotate palm-buckle-holes))))
+   (if trackball-enabled (translate trackball-origin (dowell-angle raised-trackball)) nil)
    hotswap-holes
    hotswap-clearance
    (translate [0 0 -20] (cube 350 350 40))))
 
-
-(def trackball-subtract (union
-                         ; Subtract out the actual trackball
-                         (translate trackball-origin (dowell-angle raised-trackball))
-                         ; Subtract out space for the cup, because sometimes things from the keyboard creep in
-                         (translate trackball-origin (sphere (/ trackball-width-plus-bearing 2)))
-                         ; Just... double check that we have the full dowell negative
-                         (translate trackball-origin rotated-dowells)
-                         hotswap-clearance))
-(def model-right-with-trackball (difference
-                                 (union
-                                   model-right-initial
-                                   trackball-mount-translated-to-model)
-                                 trackball-subtract))
+(def trackball-mount-translated-to-model (difference
+                                          (union
+                                           (translate trackball-origin trackball-mount)
+                                           trackball-walls
+                                           trackball-to-case
+                                           )
+                                          trackball-subtract
+                                          key-clearance
+                                          thumb-key-clearance
+                                          (translate trackball-origin trackball-insertion-cyl)
+                                          ))
 
 (spit "things/trackball-test.scad" (write-scad
                                     (difference
@@ -1568,23 +1609,28 @@
                                      trackball-subtract
                                      thumb-key-clearance
                                      (translate [0 0 -20] (cube 350 350 40)))))
-(def model-right (if trackball-enabled model-right-with-trackball model-right-initial))
 
 ;(spit "things/palm-rest.scad" (write-scad palm-rest))
+
+(def right-plate (difference
+                  (union
+                   trackball-mount-translated-to-model
+                   usb-holder-holder
+                   trrs-holder
+                   (translate [0 0 (/ bottom-plate-thickness -2)] plate-attempt)
+                   (translate thumb-tent-origin tent-nut)
+                   (translate index-tent-origin tent-nut))
+                  (translate thumb-tent-origin tent-thread)
+                  (translate index-tent-origin tent-thread)
+                  (translate [0 0 -22] (cube 350 350 40))
+                  trrs-holder-hole
+                  model-right ; Just rm the whole model-right to make sure there's no obstruction
+                  ))
 
 (spit "things/right-plate.scad"
       (write-scad
        (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
-       (difference
-        (union
-         plate-attempt
-         (translate thumb-tent-origin tent-nut)
-         (translate index-tent-origin tent-nut)
-         )
-        (translate thumb-tent-origin tent-thread)
-        (translate index-tent-origin tent-thread)
-        )
-
+       right-plate
        ))
 
 (spit "things/tent-nut.scad" (write-scad
@@ -1615,7 +1661,7 @@
       (write-scad
        (difference
         (union
-;         hand-on-test
+         hand-on-test
          hotswap-tester
          model-right
 ;         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
@@ -1626,8 +1672,11 @@
 
         (translate [0 0 -20] (cube 350 350 40)))))
 
-(spit "things/right.scad" (write-scad (difference
+(spit "things/right.scad" (write-scad
+                           (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                           (union
                                         model-right
+;                                       (color [220/255 163/255 163/255 1] right-plate)
 ;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
 ;                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
 ;                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
