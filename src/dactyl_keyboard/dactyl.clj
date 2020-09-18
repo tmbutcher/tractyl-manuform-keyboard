@@ -663,14 +663,13 @@
 (def pin-offset 1.7)
 (def socket-pin  (translate [0 (/ pin-cutout-height 2) 0] (union
                   (translate [0 0 2] (cube 0.8 pin-cutout-height 4))
-                  (translate [0 0 (+ 4 3)] (cube 2.2 pin-cutout-height 6 ))
-                  (translate [0 0 (+ 10 0.5)] (cube 0.8 pin-cutout-height 1 )))))
+                  (translate [0 0 (+ 4 2.5)] (cube 2.2 pin-cutout-height 5 ))
+                  (translate [0 0 (+ 9 0.5)] (cube 1.7 pin-cutout-height 1)))))
 ;; Hotswap socket test
 (def socket-distance 5.5)
-(def socket-height 6.5)
+(def socket-height 5.5)
 (def socket-width (+ socket-distance 4))
 (def hotswap-buckle-length 4)
-(def hotswap-top-wire-length 2.8)
 (def grip-length 1)
 (defn pins-place [socket-pin]
   (union
@@ -681,12 +680,13 @@
 (def socket-join-height (- socket-height 3))
 (def hotswap-clamp
   (let[grip-width    2
-       grip-height 4
+       grip-height 3
        grip            (polygon [[0 0] [grip-width 0] [grip-width grip-length] [0 grip-length]])
        thickness 1
        width (+ socket-width 0.25) ; give some wiggle room
        length (+ hotswap-buckle-length 0.15) ; give some wiggle room
        grip-offset     (+ (/ width 2) thickness)
+       socket-slot-height (- socket-height 1)
        flat-model (union
                                          (translate [(/ width 2) (- length)] (square thickness length :center false))
                                          (translate [(/ width -2) (- length)] (mirror [1 0] (square thickness length :center false)))
@@ -695,13 +695,13 @@
                                               (translate [(- grip-offset) 0] grip)
                                               (translate [grip-offset 0] (mirror [1 0] grip)))]
                           (union
-                           (extrude-linear { :height socket-height } flat-model)
-                           (translate [0 0 (/ (- grip-height socket-height) 2)] (extrude-linear { :height grip-height } flat-grip-model))
+                           (extrude-linear { :height socket-slot-height } flat-model)
+                           (translate [0 0 (/ (- grip-height socket-slot-height) 2)] (extrude-linear { :height grip-height } flat-grip-model))
                            ; Bottom part of the holder
                            (let [bottom-width (+ width thickness thickness)
                                  bottom-length (+ length thickness grip-length)]
                              (difference
-                              (translate [0 (+ (/ bottom-length -2) grip-length) (- (/ socket-height -2) (/ thickness 2))] (cube bottom-width bottom-length thickness))
+                              (translate [0 (+ (/ bottom-length -2) grip-length) (- (/ socket-slot-height -2) (/ thickness 2))] (cube bottom-width bottom-length thickness))
                               (translate [0 (- (- length pin-offset)) 0] hotswap-socket-pins))))))
 (def hotswap-socket (difference
                      (translate [0 (/ (- hotswap-buckle-length pin-offset) 2) 0] (cube socket-width (- hotswap-buckle-length pin-offset) socket-height))
@@ -832,7 +832,7 @@
 (spit "things/hotswap.scad" (write-scad (union hotswap-clamp-key-mount (position-socket-clamp (translate [0 (- (- hotswap-buckle-length pin-offset)) 0] hotswap-socket)))))
 (spit "things/hotswap-on-key-test.scad" (write-scad (union
                                                      buckle-holes-on-key
-                                                     (color [220/255 120/255 120/255 1] single-hotswap-clearance)
+;                                                     (color [220/255 120/255 120/255 1] single-hotswap-clearance)
                                                      unified-pin-hotswap-mount
                                                      single-plate)))
 (spit "things/hotswap-clamp.scad" (write-scad hotswap-clamp-key-mount))
