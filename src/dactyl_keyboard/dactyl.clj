@@ -15,6 +15,7 @@
 (def nrows 4)
 (def ncols 5)
 (def trackball-enabled true)
+(def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
@@ -617,7 +618,7 @@
     (rotate (deg2rad -45) [1 0 0] palm)
     ))
 
-(defn buckle [& {:keys [triangle-length triangle-width buckle-width-adjust buckle-width buckle-thickness buckle-length buckle-end-length buckle-height include-middle]}]
+(defn buckle [& {:keys [triangle-length triangle-width buckle-width-adjust buckle-width buckle-thickness buckle-length buckle-end-length buckle-height include-middle end-supports?] :or [end-supports? true]}]
   (let
     [buckle-end-width (- buckle-width (* 2 buckle-thickness))
      palm-buckle-triangle (polygon [[0 triangle-length] [triangle-width 0] [0 0]])
@@ -667,7 +668,7 @@
                   (translate [0 0 (+ 9 0.5)] (cube 1.7 pin-cutout-height 1)))))
 ;; Hotswap socket test
 (def socket-distance 5.5)
-(def socket-height 5.5)
+(def socket-height (if printed-hotswap? 5.5 4))
 (def socket-width (+ socket-distance 4))
 (def hotswap-buckle-length 4)
 (def grip-length 1)
@@ -677,7 +678,7 @@
    (translate [(/ socket-distance 2) 0 (- -4 (/ socket-height 2))] socket-pin))
   )
 (def hotswap-socket-pins (pins-place socket-pin))
-(def socket-join-height (- socket-height 3))
+(def socket-join-height (if printed-hotswap? (- socket-height 3) 2))
 (def hotswap-clamp
   (let[grip-width    2
        grip-height 3
@@ -711,6 +712,26 @@
 ;                     (translate [0 -1.5 0] (pins-place socket-pin-square))
                      ))
 
+(defn official-hotswap [width length height wings?] (translate [0 0 0] (difference
+                                                                        (union
+                                                                         (translate [0 -0.4 0] (cube width length height))
+                                                          (translate [(* 0.866 socket-distance) (* -0.5 socket-distance) 0] (cube width length height))
+                                                                                   (if wings?
+                                                                                     (union
+                                                                                      (translate [(/ width -2) -0.4 0] (cube width 2.5 height))
+                                                                                      (translate [(+ (* 0.866 socket-distance) (/ width 2)) (* -0.5 socket-distance) 0] (cube width 2.5 height))
+                                                                                       )
+                                                                                     nil)))))
+(def official-hotswap-clamp (translate [0 -2.5 0] (difference
+                                                   (official-hotswap 6.25 6.25 4 false)
+                             (translate [0 0 1] (official-hotswap 5.25 5.25 2 true))
+                                                   ; The middle piece
+                                                   (->>
+                                                    (cube 2 5 2)
+                                                    (translate [(+ (/ (* 0.866 socket-distance) 2) 0.5) (+ (/ (* 0.5 socket-distance) -1) 2) 1])
+                                                    (rotate (deg2rad -30) [0 0 1]))
+                              )))
+
 
 (def plate-mount-buckle-width (- keyswitch-width 4))
 (defn position-socket-clamp [shape] (->>
@@ -718,30 +739,36 @@
                                      (translate [0 hotswap-buckle-length 0])
                                      (rotate (deg2rad -30) [0 0 1])
                                      (translate [-3 0.5 (/ socket-height 2)])))
+(def distance-from-socket 1.6)
+(defn position-official-socket-clamp [shape] (->>
+                                     shape
+                                     (translate [0 hotswap-buckle-length 0])
+                                     (translate [-5 (+ distance-from-socket 0.8) (/ socket-height 2)])))
+
 (def rotated-socket-clamp
   (->>
    hotswap-clamp
    position-socket-clamp))
 
-(def distance-from-socket 1.6)
 (def clamp-buckle-y-offset (+ -1 (- distance-from-socket)))
 (def plate-mount-buckle-height 2)
+(def clamp-buckle (->>
+                   (buckle
+                    :include-middle      false
+                    :triangle-length     1.75
+                    :triangle-width      3.4
+                    :buckle-width-adjust 0
+                    :buckle-width        plate-mount-buckle-width
+                    :buckle-thickness    1.8
+                    :buckle-length       (+ socket-height plate-thickness -0.1) ; Remove some length to make less wiggle room
+                    :buckle-end-length   0
+                    :buckle-height       (+ plate-mount-buckle-height 0.35)) ; Add more thickness than the holes to account for wanting no wiggle room
+                   (rotate (deg2rad 90) [1 0 0])
+                   (translate [0  clamp-buckle-y-offset (+ socket-height plate-thickness)])))
 (def hotswap-clamp-key-mount
   (union
    rotated-socket-clamp
-   (->>
-    (buckle
-     :include-middle      false
-     :triangle-length     1.75
-     :triangle-width      3.4
-     :buckle-width-adjust 0
-     :buckle-width        plate-mount-buckle-width
-     :buckle-thickness    1.8
-     :buckle-length       (+ socket-height plate-thickness -0.1) ; Remove some length to make less wiggle room
-     :buckle-end-length   0
-     :buckle-height       (+ plate-mount-buckle-height 0.35)) ; Add more thickness than the holes to account for wanting no wiggle room
-    (rotate (deg2rad 90) [1 0 0])
-    (translate [0  clamp-buckle-y-offset (+ socket-height plate-thickness)]))
+   clamp-buckle
    ; Connect the left buckle to the socket
    (hull
     (translate [(- (/ plate-mount-buckle-width -2) -3.5) -1.2 (/ socket-join-height 2)]
@@ -761,6 +788,15 @@
                (cube 1 1 socket-join-height))
     (translate [(+ (/ plate-mount-buckle-width 2) 0.5) clamp-buckle-y-offset (/ socket-join-height 2)]
                (cube 1 plate-mount-buckle-height socket-join-height)))))
+
+(def official-hotswap-clamp-key-mount (union
+                                       (position-official-socket-clamp official-hotswap-clamp)
+                                       clamp-buckle
+                                       ; Connect the buckles together with a cube
+                                       (difference
+                                        (translate [(- (/ plate-mount-buckle-width -2) 1.8) (- clamp-buckle-y-offset (/ (+ plate-mount-buckle-height 0.35) 2) 2) 0]
+                                                   (cube (+ 1.8 plate-mount-buckle-width) (+ (- clamp-buckle-y-offset) (/ (+ plate-mount-buckle-height 0.35) 2) 2 2) socket-join-height :center false))
+                                        (position-official-socket-clamp (translate [0 -2.5 0] (official-hotswap 6 6 4 true))))))
 (def buckle-hole-y-translate (+ (/ keyswitch-height 2) plate-mount-buckle-height distance-from-socket))
 (def buckle-holes-on-key (->>
                           (buckle-holes
@@ -807,14 +843,14 @@
 (def unified-pin-hotswap-mount (translate
                                 [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- socket-height)]
                                 (rotate (deg2rad 180) [0 0 1]
-                                        (union
+                                        (if printed-hotswap? (union
                                          hotswap-clamp-key-mount
                                          (->>
                                           (union
                                            hotswap-socket-pins
                                            hotswap-socket)
                                           (translate [0 (- (- hotswap-buckle-length pin-offset)) 0])
-                                          position-socket-clamp)))))
+                                          position-socket-clamp)) official-hotswap-clamp))))
 
 (def hotswap-tester (hotswap-place unified-pin-hotswap-mount))
 (def single-hotswap-clearance
@@ -835,9 +871,11 @@
 ;                                                     (color [220/255 120/255 120/255 1] single-hotswap-clearance)
                                                      unified-pin-hotswap-mount
                                                      single-plate)))
-(spit "things/hotswap-clamp.scad" (write-scad hotswap-clamp-key-mount))
+(spit "things/hotswap-clamp.scad" (write-scad (if printed-hotswap? hotswap-clamp-key-mount official-hotswap-clamp-key-mount)))
+(spit "things/printed-hotswap-clamp.scad" (write-scad hotswap-clamp))
 (spit "things/hotswap-socket.scad" (write-scad hotswap-socket))
 (spit "things/socket-on-key.scad" (write-scad single-plate-with-hotswap))
+(spit "things/official-hotswap.scad" (write-scad official-hotswap-clamp))
 
 ;;;;;;;;;;;;;;;
 ;; Trackball ;;
@@ -947,10 +985,10 @@
                                                      (rotate (deg2rad -39) [0 1 0] thing))
                                              ))
 
-(def sensor-length 28.5)
+(def sensor-length 28)
 (def sensor-width 22)
 (def sensor-holder-width (/ sensor-width 2))
-(def sensor-height 7.5)
+(def sensor-height 7)
 (def sensor-holder-arm (translate [0 -0.5 0]
                                   (union
                                    (translate [0 (- (/ 4 2) (/ 1 2)) 1] (cube sensor-holder-width 4 2))
@@ -1234,7 +1272,7 @@
 (def usb-holder-ref (key-position 0 0 (map - (wall-locate2  0  -1) [0 (/ mount-height 2) 0])))
 
 (def usb-holder-position (map + [5 16 0] [(first usb-holder-ref) (second usb-holder-ref) 2]))
-(def usb-holder-cube   (cube 18.5 35.5 4))
+(def usb-holder-cube   (cube 18.5 35 4))
 (def usb-holder-holder (translate (map + usb-holder-position [5 -12.9 0]) (difference (cube 21 39 6) (translate [0 0 1] usb-holder-cube))))
 
 (def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
