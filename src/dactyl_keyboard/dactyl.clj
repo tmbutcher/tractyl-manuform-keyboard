@@ -14,7 +14,7 @@
 
 (def nrows 4)
 (def ncols 5)
-(def trackball-enabled true)
+(def trackball-enabled false)
 (def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 8))                        ; curvature of the columns
@@ -330,8 +330,8 @@
            (rotate (deg2rad  27) [0 0 1]) ; original 10
            (translate thumborigin)
            (translate [-21 -12.5 11]))) ; original 1.5u  (translate [-12 -16 3])
-(def trackball-middle-translate [-5 7 -0.5])
-(def thumb-tip-offset [-33 -16 -6.5])
+(def trackball-middle-translate [-6.5 6 -0.5])
+(def thumb-tip-offset [-35 -16 -6.5])
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 (def tl-thumb-loc (map + thumb-tip-offset (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-tl-place [shape]
@@ -342,7 +342,7 @@
            (translate thumborigin)
            (translate tl-thumb-loc))) ; original 1.5u (translate [-32 -15 -2])))
 
-(def mr-thumb-loc (map + [-25 -37.5 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
+(def mr-thumb-loc (map + [-23.5 -36.5 -2] (if trackball-enabled trackball-middle-translate [0 0 0])))
 (defn thumb-mr-place [shape]
       (->> shape
            (rotate (deg2rad  -12) [1 0 0])
@@ -351,7 +351,7 @@
            (translate thumborigin)
            (translate mr-thumb-loc)))
 
-(def br-thumb-loc (map + [-36 -44 -20] (if trackball-enabled [2 -12 2] [0 0 0])))
+(def br-thumb-loc (map + [-34.5 -44 -20] (if trackball-enabled [2 -12 2] [0 0 0])))
 (defn thumb-br-place [shape]
       (->> shape
            (rotate (deg2rad   -18) [1 0 0])
@@ -668,7 +668,7 @@
                   (translate [0 0 (+ 9 0.5)] (cube 1.7 pin-cutout-height 1)))))
 ;; Hotswap socket test
 (def socket-distance 5.5)
-(def socket-height (if printed-hotswap? 5.5 4))
+(def socket-height 5.5)
 (def socket-width (+ socket-distance 4))
 (def hotswap-buckle-length 4)
 (def grip-length 1)
@@ -678,7 +678,7 @@
    (translate [(/ socket-distance 2) 0 (- -4 (/ socket-height 2))] socket-pin))
   )
 (def hotswap-socket-pins (pins-place socket-pin))
-(def socket-join-height (if printed-hotswap? (- socket-height 3) 2))
+(def socket-join-height (if printed-hotswap? (- socket-height 3) 3))
 (def hotswap-clamp
   (let[grip-width    2
        grip-height 3
@@ -723,12 +723,12 @@
                                                                                        )
                                                                                      nil)))))
 (def official-hotswap-clamp (translate [0 -2.5 0] (difference
-                                                   (official-hotswap 6.25 6.25 4 false)
-                             (translate [0 0 1] (official-hotswap 5.25 5.25 2 true))
+                                                   (official-hotswap 6.25 6.25 5.5 false)
+                             (translate [0 0 2.5] (official-hotswap 5.25 5.25 2 true))
                                                    ; The middle piece
                                                    (->>
                                                     (cube 2 5 2)
-                                                    (translate [(+ (/ (* 0.866 socket-distance) 2) 0.5) (+ (/ (* 0.5 socket-distance) -1) 2) 1])
+                                                    (translate [(+ (/ (* 0.866 socket-distance) 2) 0.5) (+ (/ (* 0.5 socket-distance) -1) 2) 2.5])
                                                     (rotate (deg2rad -30) [0 0 1]))
                               )))
 
@@ -794,9 +794,9 @@
                                        clamp-buckle
                                        ; Connect the buckles together with a cube
                                        (difference
-                                        (translate [(- (/ plate-mount-buckle-width -2) 1.8) (- clamp-buckle-y-offset (/ (+ plate-mount-buckle-height 0.35) 2) 2) 0]
-                                                   (cube (+ 1.8 plate-mount-buckle-width) (+ (- clamp-buckle-y-offset) (/ (+ plate-mount-buckle-height 0.35) 2) 2 2) socket-join-height :center false))
-                                        (position-official-socket-clamp (translate [0 -2.5 0] (official-hotswap 6 6 4 true))))))
+                                        (translate [(- (/ plate-mount-buckle-width -2) 1.8) (- clamp-buckle-y-offset (/ (+ plate-mount-buckle-height 0.35) 2)) 0]
+                                                   (cube (+ 1.8 plate-mount-buckle-width) (+ (- clamp-buckle-y-offset) (/ (+ plate-mount-buckle-height 0.35) 2) 2) socket-join-height :center false))
+                                        (position-official-socket-clamp (translate [0 -2.5 2.5] (official-hotswap 6 6 4 true))))))
 (def buckle-hole-y-translate (+ (/ keyswitch-height 2) plate-mount-buckle-height distance-from-socket))
 (def buckle-holes-on-key (->>
                           (buckle-holes
@@ -1068,7 +1068,7 @@
   )
 
 (def raised-trackball (translate [0 0 trackball-raise] (sphere (+ (/ trackball-width 2) 0.5))))
-(def trackball-origin (map + thumb-tip-origin [-10.5 10 -5]))
+(def trackball-origin (map + thumb-tip-origin [-8.5 10 -5]))
 
 ;;;;;;;;;;
 ;; Case ;;
@@ -1199,14 +1199,15 @@
                          ))
 
 ; NOTE: Using -1.5 instead of -1 to make these a bit bigger to make room for the hotswaps
+(def wall-multiplier (if trackball-enabled 1.5 1))
 (def trackball-tweeners (union
-                         (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-br-place  0 -1 web-post-br)))
+                         (wall-brace thumb-mr-place  0 (- wall-multiplier) web-post-br thumb-br-place  0 -1 web-post-br)))
 (def back-convex-thumb-wall-0 ; thumb tweeners
   (if trackball-enabled
     trackball-tweeners
     (union
-     (wall-brace thumb-mr-place  0 -1.5 web-post-bl thumb-br-place  0 -1 web-post-br))))
-(def back-convex-thumb-wall-1 (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-tr-place 0 -1.5 thumb-post-br))
+     (wall-brace thumb-mr-place  0 (- wall-multiplier) web-post-bl thumb-br-place  0 -1 web-post-br))))
+(def back-convex-thumb-wall-1 (wall-brace thumb-mr-place  0 (- wall-multiplier) web-post-br thumb-tr-place 0 (- wall-multiplier) thumb-post-br))
 (def back-convex-thumb-wall-2 (if trackball-enabled
                                 ; Back right thumb to the middle one
                                 (triangle-hulls
@@ -1214,7 +1215,7 @@
                                  (thumb-mr-place web-post-bl)
                                  (thumb-br-place web-post-br))
                                 (union
-                                                         (wall-brace thumb-mr-place  0 -1.5 web-post-br thumb-mr-place  0 -1.5 web-post-bl))))
+                                                         (wall-brace thumb-mr-place  0 (- wall-multiplier) web-post-br thumb-mr-place  0 (- wall-multiplier) web-post-bl))))
 (def thumb-walls  ; thumb walls
   (union
    (wall-brace thumb-bl-place -1  0 web-post-bl thumb-br-place -1  0 web-post-tl)
@@ -1275,7 +1276,9 @@
 (def usb-holder-cube   (cube 18.5 35 4))
 (def usb-holder-holder (translate (map + usb-holder-position [5 -12.9 0]) (difference (cube 21 39 6) (translate [0 0 1] usb-holder-cube))))
 
-(def usb-jack (translate (map + usb-holder-position [5 10 4]) (cube 8.1 20 3.1)))
+(def usb-jack (translate (map + usb-holder-position [5 10 4]) (union
+                                                               (translate [0 -2.5 0] (cube 12 3 5))
+                                                               (cube 6.5 11.5 3.1))))
 
 (def pro-micro-position (map + (key-position 0 1 (wall-locate3 -1 0)) [-6 2 -15]))
 (def pro-micro-space-size [4 10 12]) ; z has no wall;
@@ -1336,7 +1339,7 @@
              ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
              (screw-insert lastcol lastrow  bottom-radius top-radius height [-3.5 17 0])
              (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height [1 -16 0])))
+             (screw-insert 1 lastrow         bottom-radius top-radius height (if trackball-enabled [1 -16 0] [1 -18.5 0]))))
 
 ; Hole Depth Y: 4.4
 (def screw-insert-height 4)
@@ -1485,32 +1488,34 @@
 (def hook-angle 40)
 
 ; Some convoluted logic to create a little hook to hold the ball in
-(def ball-hook
-  (rotate (deg2rad 90) [1 0 0]
-          (union
-           (translate [0 (/ tent-ball-rad 2) 0]
-                      (rotate (deg2rad 90) [1 0 0] (cube tent-ball-holder-thickness tent-ball-holder-thickness tent-ball-rad)))
-           (translate [(- (+ tent-ball-rad (/ tent-ball-holder-thickness 2))) tent-ball-rad 0]
-                      (extrude-rotate {:angle hook-angle :convexity 10} (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0]
-                                                                                   (square tent-ball-holder-thickness tent-ball-holder-thickness)))
-                      )
-           )
-          ))
+(defn ball-hook [with-hook?]
+  (let
+    [hook-height (if with-hook? tent-ball-rad (/ tent-ball-rad 1.5))]
+    (rotate (deg2rad 90) [1 0 0]
+            (union
+             (translate [0 (/ hook-height 2) 0]
+                        (rotate (deg2rad 90) [1 0 0] (cube tent-ball-holder-thickness tent-ball-holder-thickness hook-height)))
+             (if with-hook? (translate [(- (+ tent-ball-rad (/ tent-ball-holder-thickness 2))) tent-ball-rad 0]
+                                       (extrude-rotate {:angle hook-angle :convexity 10} (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0]
+                                                                                                    (square tent-ball-holder-thickness tent-ball-holder-thickness)))
+                                       ) nil)
+             )
+            )))
 
-(defn rotated-ball-hook [angle]
-  (rotate (deg2rad angle) [0 0 1] (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0 (/ tent-foot-thickness 2)] ball-hook))
+(defn rotated-ball-hook [angle with-hook?]
+  (rotate (deg2rad angle) [0 0 1] (translate [(+ tent-ball-rad (/ tent-ball-holder-thickness 2)) 0 (/ tent-foot-thickness 2)] (ball-hook with-hook?)))
   )
 
 (def tent-foot (union
                 (cube tent-foot-width tent-foot-height tent-foot-thickness)
-                (rotated-ball-hook 0)
-                (rotated-ball-hook 90)
-                (rotated-ball-hook 180)
-                (rotated-ball-hook 270)
+                (rotated-ball-hook 0 true)
+                (rotated-ball-hook 90 true)
+                (rotated-ball-hook 180 true)
+                (rotated-ball-hook 270 false)
                  ))
 
-(def thumb-tent-origin [-22 -55 -1])
-(def index-tent-origin [-46 17 -1])
+(def thumb-tent-origin (map + [-22 -74 -1] (if trackball-enabled [3 -12 0] [0 0 0])))
+(def index-tent-origin [-44 27 -1])
 
 (def tent-nut-height 6)
 (def tent-thread
@@ -1526,8 +1531,8 @@
 ;;;;;;;;;;;;;;;
 ;; Palm Rest ;;
 ;;;;;;;;;;;;;;;
-(def palm-length 120)
-(def palm-width 90)
+(def palm-length 80)
+(def palm-width 80)
 (def palm-cutoff 32)
 (def palm-support (translate [0 0 (- palm-cutoff)] (difference
                    (resize [palm-width palm-length 80] (sphere 240))
@@ -1544,7 +1549,7 @@
 (def buckle-width 12)
 (def buckle-thickness 3)
 (def buckle-length 3.7)
-(def buckle-end-length 5)
+(def buckle-end-length 14)
 (def buckle-height 4)
 (def buckle-end-width (- buckle-width (* 2 buckle-thickness)))
 (def palm-buckle (buckle
@@ -1567,33 +1572,48 @@
                         :triangle-length triangle-length
                         :buckle-height buckle-height
                          ))
-(def palm-rod-top-length 44)
-(def palm-rod-bottom-length 10.5)
-(def palm-rod-length (+ palm-rod-top-length palm-rod-bottom-length))
-(def palm-attach-rod (union
-                      (translate [0 (- (+ (/ 5 2) buckle-length)) (- (/ palm-rod-length 2) palm-rod-bottom-length)]
-                                 (cube buckle-end-width 5 palm-rod-length))
-                      palm-buckle))
-
+(def support-length 30)
+(def palm-screw-height 26.5)
 (def positioned-palm-support (->> palm-support
                                   (rotate (deg2rad 20) [0 0 1])
-                                  (rotate (deg2rad 5) [1 0 0])
-                                  (rotate (+ tenting-angle (deg2rad 14)) [0 1 0])
-                                  (translate [2 -30 (- palm-rod-top-length 22)]
+                                  (rotate (deg2rad 17) [1 0 0])
+                                  (rotate (+ tenting-angle (deg2rad 11)) [0 1 0])
+                                  (translate [2 -34 15]
                                              )))
+(def palm-attach-rod (union
+                      (translate [0 (+ (- buckle-length) (/ support-length -2) (/ (+ tent-stand-rad 0.5) 2)) 0]
+                                 (cube buckle-end-width (- support-length (+ tent-stand-rad 0.5)) 5))
+                      (difference
+                       (translate [0 (+ (- buckle-length) (- support-length)) (- (/ palm-screw-height 2) (/ 5 2))]
+                                  (cube 13 13 palm-screw-height))
+                       (translate [-0.5 (+ (- buckle-length) (- support-length)) (+ (/ 5 -2) palm-screw-height)]
+                                  (rotate (deg2rad 180) [1 0 0]
+                                          (call-module "thread" (+ tent-stand-rad 0.5) palm-screw-height tent-stand-thread-lead)))
+                       ; Rm the top bit sticking out
+                       (hull positioned-palm-support
+                             (translate [0 (+ (- buckle-length) (- support-length)) (+ palm-screw-height 20)]
+                                        (cube 13 13 0.1))
+                       ))
+
+                      palm-buckle))
+
 (def palm-rest (union
                 positioned-palm-support
                 ; Subtract out the part of the rod that's sticking up
-                (difference
+
                  palm-attach-rod
-                 (hull
-                  positioned-palm-support
-                  (translate [0 (- (+ (/ 3 2) buckle-length)) (+ palm-rod-top-length 5)]
-                             (cube buckle-width 3 0.2))))))
+))
 
 (spit "things/palm-rest.scad" (
-                           write-scad palm-rest
+                           write-scad
+                                        (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                                        palm-rest
                            ))
+(spit "things/left-palm-rest.scad" (
+                                     write-scad
+                                     (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                                     (mirror [-1 0 0] palm-rest)
+                                     ))
 
 (spit "things/palm-attach-test.scad" (write-scad
                                        palm-attach-rod
@@ -1618,6 +1638,7 @@
     connectors
     thumb
     thumb-connectors
+;    usb-jack
     (difference (union
                  case-walls
                  screw-insert-outers)
@@ -1629,7 +1650,6 @@
                 (translate palm-hole-origin (palm-rest-hole-rotate palm-buckle-holes))))
    (if trackball-enabled (translate trackball-origin (dowell-angle raised-trackball)) nil)
    hotswap-holes
-   hotswap-clearance
    (translate [0 0 -20] (cube 350 350 40))))
 
 (def trackball-mount-translated-to-model (difference
@@ -1657,7 +1677,7 @@
 
 (def right-plate (difference
                   (union
-                   trackball-mount-translated-to-model
+                   (if trackball-enabled trackball-mount-translated-to-model nil)
                    usb-holder-holder
                    trrs-holder
                    (translate [0 0 (/ bottom-plate-thickness -2)] plate-attempt)
@@ -1676,6 +1696,12 @@
        (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
        right-plate
        ))
+
+(spit "things/left-plate.scad"
+      (write-scad
+       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       (mirror [-1 0 0] right-plate)
+))
 
 (spit "things/tent-nut.scad" (write-scad
                               (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
@@ -1709,8 +1735,8 @@
          (color [220/255 120/255 120/255 1] hotswap-tester)
          (color [220/255 163/255 163/255 1] right-plate)
          model-right
-;         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
-;                    (palm-rest-hole-rotate palm-rest))
+         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
+                    (palm-rest-hole-rotate palm-rest))
 ;         (if trackball-enabled (translate trackball-origin test-ball) nil)
          thumbcaps
          caps)
