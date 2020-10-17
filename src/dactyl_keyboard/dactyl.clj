@@ -14,8 +14,8 @@
 
 (def nrows 4)
 (def ncols 5)
-(def trackball-enabled false)
-(def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
+(def trackball-enabled true)
+(def printed-hotswap? true) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
@@ -1731,7 +1731,7 @@
       (write-scad
        (difference
         (union
-;         hand-on-test
+         hand-on-test
          (color [220/255 120/255 120/255 1] hotswap-tester)
          (color [220/255 163/255 163/255 1] right-plate)
          model-right
