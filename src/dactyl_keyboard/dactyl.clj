@@ -1606,12 +1606,12 @@
 
 (spit "things/palm-rest.scad" (
                            write-scad
-                                        (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                                        (include "../nutsnbolts/cyl_head_bolt.scad")
                                         palm-rest
                            ))
 (spit "things/left-palm-rest.scad" (
                                      write-scad
-                                     (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                                     (include "../nutsnbolts/cyl_head_bolt.scad")
                                      (mirror [-1 0 0] palm-rest)
                                      ))
 
@@ -1693,18 +1693,18 @@
 
 (spit "things/right-plate.scad"
       (write-scad
-       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       (include "../nutsnbolts/cyl_head_bolt.scad")
        right-plate
        ))
 
 (spit "things/left-plate.scad"
       (write-scad
-       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       (include "../nutsnbolts/cyl_head_bolt.scad")
        (mirror [-1 0 0] right-plate)
 ))
 
 (spit "things/tent-nut.scad" (write-scad
-                              (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                              (include "../nutsnbolts/cyl_head_bolt.scad")
                               tent-nut))
 
 (spit "things/tent-foot.scad"
@@ -1712,7 +1712,7 @@
       )
 (spit "things/tent-stand.scad"
       (write-scad
-       (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+       (include "../nutsnbolts/cyl_head_bolt.scad")
        tent-stand
        )
       )
@@ -1720,7 +1720,7 @@
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right)))
 (spit "things/tent-all.scad" (write-scad
-                              (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                              (include "../nutsnbolts/cyl_head_bolt.scad")
                               (union
                                 tent-foot
                                (translate [0 0 (+ 3 tent-ball-rad (/ tent-foot-thickness 2))] tent-stand)
@@ -1744,7 +1744,7 @@
         (translate [0 0 -20] (cube 350 350 40)))))
 
 (spit "things/right.scad" (write-scad
-                           (include "/Users/nprince/apps/dactyl-manuform-mini-keyboard/nutsnbolts/cyl_head_bolt.scad")
+                           (include "../nutsnbolts/cyl_head_bolt.scad")
                            (union
                                         model-right
                             ;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
