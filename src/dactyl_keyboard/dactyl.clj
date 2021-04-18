@@ -8,14 +8,16 @@
 (defn deg2rad [degrees]
       (* (/ degrees 180) pi))
 
+(def screw-insert-case-radius 1.5)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Shape parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
 (def nrows 4)
 (def ncols 5)
-(def trackball-enabled true)
-(def printed-hotswap? true) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
+(def trackball-enabled false)
+(def printed-hotswap? false) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
@@ -656,6 +658,22 @@
      (translate [(- (- hole-x-translate) (- triangle-width buckle-thickness)) buckle-length 0] ;clear out some space on the other end of the buckle
                 (mirror [1 0] (cube (+ triangle-width 0.25) 2 (+ buckle-height 0.5) :center false))))))
 
+;;;;;;;;;;;;;;;;;
+;; screws ;;
+;;;;;;;;;;;;;;;;;
+(defn screw-insert-shape [bottom-radius top-radius height]
+  (union
+   (->> (binding [*fn* 30]
+          (cylinder [bottom-radius top-radius] height)))
+   (translate [0 0 (/ height 2)] (->> (binding [*fn* 30] (sphere top-radius))))))
+
+; Hole Depth Y: 4.4
+(def screw-insert-height 4)
+
+; Hole Diameter C: 4.1-4.4
+(def screw-insert-bottom-radius (/ 4.0 2))
+(def screw-insert-top-radius (/ 3.9 2))
+
 ;;;;;;;;;;;;;
 ;; Hotswap ;;
 ;;;;;;;;;;;;;
@@ -722,7 +740,7 @@
                                                                                       (translate [(+ (* 0.866 socket-distance) (/ width 2)) (* -0.5 socket-distance) 0] (cube width 2.5 height))
                                                                                        )
                                                                                      nil)))))
-(def official-hotswap-clamp (translate [0 -2.5 0] (difference
+(def official-hotswap-clamp (translate [-1 -1 -2.5] (difference
                                                    (official-hotswap 6.25 6.25 5.5 false)
                              (translate [0 0 2.5] (official-hotswap 5.25 5.25 2 true))
                                                    ; The middle piece
@@ -814,31 +832,85 @@
                                 (translate [0 0 (/ plate-thickness 2)] (cube keyswitch-width keyswitch-height 3))
                                 buckle-holes-on-key))
 
-(defn hotswap-place [hotswap] (let [
-                                     bottom-hotswap (rotate (deg2rad 180) [0 0 1] hotswap)
-                                     ] (union
-                                        ; Bottom mounts
-                                        (apply union
-                                               (for [column columns
-                                                     row [0 1]
-                                                     :when (or (.contains [2 3] column)
-                                                               (not= row lastrow))]
-                                                 (->> bottom-hotswap
-                                                      (key-place column row))))
-                                        (apply union
-                                               (for [column columns
-                                                     row [2 3]
-                                                     :when (or (.contains [2 3] column)
-                                                               (not= row lastrow))]
-                                                 (->> hotswap
-                                                      (key-place column row))))
-                                        (thumb-mr-place (if trackball-enabled bottom-hotswap hotswap))
-                                        (thumb-br-place hotswap)
-                                        (if trackball-enabled nil (thumb-tl-place bottom-hotswap))
-                                        (thumb-bl-place bottom-hotswap)
-                                        (thumb-tr-place bottom-hotswap))))
+(def hotswap-connector (translate [0 3 -2] (cube 2 6 2)))
+(defn connector-place [column row hotswap hotswap-connector]
+  (if (and
+       (not= column lastcol)
+       (not (and (= column 3) (= row lastrow)))
+       )
+    (let
+      [
+        bottom (key-place (+ 1 column) row (translate [-18 0 -8] hotswap-connector))
+        bottom-next-row (key-place (+ 1 column) (+ row 1) (translate [-18 0 -8] hotswap-connector))
+        ]
+      (union
+       ; Hull directly down
+       (hull (key-place column row hotswap-connector) bottom)
+       ; hull over
+       (hull bottom (key-place (+ 1 column) row hotswap-connector))
+       ; hull to the next row
+       (if (or (and (= row (- lastrow 1)) (= column 2))
+               (< row (- lastrow 1)))
+         (hull bottom bottom-next-row))))))
 
-(def hotswap-holes (hotswap-place buckle-holes-on-key))
+(defn thumb-hotswap-place [hotswap] (let [top-hotswap              (rotate (deg2rad 180) [0 0 1] hotswap)
+                                 bottom-hotswap-connector (rotate (deg2rad 180) [0 0 1] hotswap-connector)
+                                 ] (union
+                                    (thumb-mr-place (if trackball-enabled top-hotswap hotswap))
+                                    (thumb-br-place hotswap)
+                                    (if trackball-enabled nil (thumb-tl-place top-hotswap))
+                                    (thumb-bl-place top-hotswap)
+                                    (thumb-tr-place top-hotswap))))
+(defn hotswap-place [hotswap] (let [top-hotswap              (rotate (deg2rad 180) [0 0 1] hotswap)
+                                    bottom-hotswap-connector (rotate (deg2rad 180) [0 0 1] hotswap-connector)
+                                    ] (union
+                                        ; top row is a litte different
+                                       (apply union
+                                              (for [column columns]
+                                                 (union
+                                                  (->> hotswap
+                                                       (key-place column 0))
+                                                  (connector-place column 0 hotswap bottom-hotswap-connector))))
+                                       (apply union
+                                              (for [column columns
+                                                     row (range 1 nrows)
+                                                     :when (or (.contains [2 3] column)
+                                                               (not= row lastrow))]
+                                                 (union
+                                                  (->> top-hotswap
+                                                       (key-place column row))
+                                                  (connector-place column row top-hotswap hotswap-connector)))))))
+(def hotswap-mesh
+  (hotswap-place official-hotswap-clamp))
+
+(def thumb-hotswap-mesh
+  (thumb-hotswap-place official-hotswap-clamp))
+
+(def hotswap-screw-hole (cylinder screw-insert-case-radius 10))
+(defn hotswap-screw-place [in-shape]
+  (let
+    [
+      shape (translate [0 -11.5 0] in-shape)
+      ]
+    (union
+     (key-place 1 0 shape)
+     (key-place 3 0 shape)
+     (key-place 1 1 shape)
+     (key-place 3 2 shape))))
+(def hotswap-holes (hotswap-screw-place hotswap-screw-hole))
+(def hotswap-screw-holders (let [
+                                  shape (rotate (deg2rad 180) [1 0 0]
+                                                (screw-insert-shape (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5)))
+                                  hollow-out (rotate (deg2rad 180) [1 0 0]
+                                                     (screw-insert-shape screw-insert-bottom-radius screw-insert-top-radius screw-insert-height))
+                                  ]
+                             (difference
+                              (union
+                              (hotswap-screw-place shape)
+                              (hotswap-screw-place (hull shape (translate [-2 -10 -1] (cube 11 2 2)))))
+                              (hotswap-screw-place hollow-out)
+                              (hotswap-screw-place hotswap-screw-hole)
+                              )))
 
 (def unified-pin-hotswap-mount (translate
                                 [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- socket-height)]
@@ -852,7 +924,7 @@
                                           (translate [0 (- (- hotswap-buckle-length pin-offset)) 0])
                                           position-socket-clamp)) official-hotswap-clamp))))
 
-(def hotswap-tester (hotswap-place unified-pin-hotswap-mount))
+
 (def single-hotswap-clearance
   (->>
    (cube (+ socket-width 4) (+ hotswap-buckle-length 4) (+ socket-height 3))
@@ -863,7 +935,10 @@
    (translate
     [0 (- buckle-hole-y-translate distance-from-socket plate-mount-buckle-height 0.25) (- socket-height)]
                         )))
-(def hotswap-clearance (hotswap-place single-hotswap-clearance))
+(def hotswap-clearance (union
+                        (hotswap-place single-hotswap-clearance)
+                        (thumb-hotswap-place single-hotswap-clearance)))
+
 
 (spit "things/hotswap.scad" (write-scad (union hotswap-clamp-key-mount (position-socket-clamp (translate [0 (- (- hotswap-buckle-length pin-offset)) 0] hotswap-socket)))))
 (spit "things/hotswap-on-key-test.scad" (write-scad (union
@@ -871,7 +946,8 @@
 ;                                                     (color [220/255 120/255 120/255 1] single-hotswap-clearance)
                                                      unified-pin-hotswap-mount
                                                      single-plate)))
-(spit "things/hotswap-clamp.scad" (write-scad (if printed-hotswap? hotswap-clamp-key-mount official-hotswap-clamp-key-mount)))
+
+(spit "things/hotswap-clamp.scad" (write-scad (if printed-hotswap? hotswap-clamp-key-mount official-hotswap-clamp)))
 (spit "things/printed-hotswap-clamp.scad" (write-scad hotswap-clamp))
 (spit "things/hotswap-socket.scad" (write-scad hotswap-socket))
 (spit "things/socket-on-key.scad" (write-scad single-plate-with-hotswap))
@@ -1314,39 +1390,27 @@
     ; rectangular trrs holder
     (->> (apply cube trrs-holder-hole-size) (translate [(first trrs-holder-position) (+ (/ trrs-holder-thickness -2) (second trrs-holder-position)) (+ (/ (last trrs-holder-hole-size) 2) trrs-holder-thickness)]))))
 
-(defn screw-insert-shape [bottom-radius top-radius height]
-      (union
-        (->> (binding [*fn* 30]
-                      (cylinder [bottom-radius top-radius] height)))
-        (translate [0 0 (/ height 2)] (->> (binding [*fn* 30] (sphere top-radius))))))
-
 (defn screw-insert [column row bottom-radius top-radius height offset]
-      (let [shift-right   (= column lastcol)
-            shift-left    (= column 0)
-            shift-up      (and (not (or shift-right shift-left)) (= row 0))
-            shift-down    (and (not (or shift-right shift-left)) (>= row lastrow))
-            position      (if shift-up     (key-position column row (map + (wall-locate2  0  1) [0 (/ mount-height 2) 0]))
-                                           (if shift-down  (key-position column row (map - (wall-locate2  0 -1) [0 (/ mount-height 2) 0]))
-                                                           (if shift-left (map + (left-key-position row 0) (wall-locate3 -1 0))
-                                                                          (key-position column row (map + (wall-locate2  1  0) [(/ mount-width 2) 0 0])))))]
-           (->> (screw-insert-shape bottom-radius top-radius height)
-                (translate (map + offset [(first position) (second position) (/ height 2)])))))
+  (let [shift-right   (= column lastcol)
+        shift-left    (= column 0)
+        shift-up      (and (not (or shift-right shift-left)) (= row 0))
+        shift-down    (and (not (or shift-right shift-left)) (>= row lastrow))
+        position      (if shift-up     (key-position column row (map + (wall-locate2  0  1) [0 (/ mount-height 2) 0]))
+                        (if shift-down  (key-position column row (map - (wall-locate2  0 -1) [0 (/ mount-height 2) 0]))
+                          (if shift-left (map + (left-key-position row 0) (wall-locate3 -1 0))
+                            (key-position column row (map + (wall-locate2  1  0) [(/ mount-width 2) 0 0])))))]
+    (->> (screw-insert-shape bottom-radius top-radius height)
+         (translate (map + offset [(first position) (second position) (/ height 2)])))))
 
 (defn screw-insert-all-shapes [bottom-radius top-radius height]
-      (union (screw-insert 0 0         bottom-radius top-radius height [7.5 7 0])
-             (screw-insert 0 lastrow   bottom-radius top-radius height (if trackball-enabled [-2 33 0] [0 15 0]))
-             ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
-             ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
-             (screw-insert lastcol lastrow  bottom-radius top-radius height [-3.5 17 0])
-             (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
-             (screw-insert 1 lastrow         bottom-radius top-radius height (if trackball-enabled [1 -16 0] [1 -18.5 0]))))
+  (union (screw-insert 0 0         bottom-radius top-radius height [7.5 7 0])
+         (screw-insert 0 lastrow   bottom-radius top-radius height (if trackball-enabled [-2 33 0] [0 15 0]))
+         ;  (screw-insert lastcol lastrow  bottom-radius top-radius height [-5 13 0])
+         ;  (screw-insert lastcol 0         bottom-radius top-radius height [-3 6 0])
+         (screw-insert lastcol lastrow  bottom-radius top-radius height [-3.5 17 0])
+         (screw-insert lastcol 0         bottom-radius top-radius height [-1 2 0])
+         (screw-insert 1 lastrow         bottom-radius top-radius height (if trackball-enabled [1 -16 0] [1 -18.5 0]))))
 
-; Hole Depth Y: 4.4
-(def screw-insert-height 4)
-
-; Hole Diameter C: 4.1-4.4
-(def screw-insert-bottom-radius (/ 4.0 2))
-(def screw-insert-top-radius (/ 3.9 2))
 (def screw-insert-holes  (screw-insert-all-shapes screw-insert-bottom-radius screw-insert-top-radius screw-insert-height))
 
 (spit "things/screw-test.scad"
@@ -1358,7 +1422,6 @@
        ))
 
 ; Wall Thickness W:\t1.65
-(def screw-insert-case-radius 1.5)
 (def screw-insert-outers (screw-insert-all-shapes (+ screw-insert-bottom-radius 1.65) (+ screw-insert-top-radius 1.65) (+ screw-insert-height 1.5)))
 (def screw-insert-screw-holes  (screw-insert-all-shapes screw-insert-case-radius screw-insert-case-radius 350))
 
@@ -1664,6 +1727,14 @@
                                           (translate trackball-origin trackball-insertion-cyl)
                                           ))
 
+
+(def hotswap-tester (difference
+                     (union
+                      hotswap-mesh
+                      hotswap-screw-holders)
+                     model-right))
+(spit "things/hotswap-tester.scad" (write-scad hotswap-tester))
+
 (spit "things/trackball-test.scad" (write-scad
                                     (difference
                                     (union
@@ -1731,15 +1802,16 @@
       (write-scad
        (difference
         (union
-         hand-on-test
+;         hand-on-test
          (color [220/255 120/255 120/255 1] hotswap-tester)
          (color [220/255 163/255 163/255 1] right-plate)
          model-right
-         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
-                    (palm-rest-hole-rotate palm-rest))
+;         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
+;                    (palm-rest-hole-rotate palm-rest))
 ;         (if trackball-enabled (translate trackball-origin test-ball) nil)
-         thumbcaps
-         caps)
+;         thumbcaps
+;         caps
+         )
 
         (translate [0 0 -20] (cube 350 350 40)))))
 
