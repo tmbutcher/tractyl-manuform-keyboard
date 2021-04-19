@@ -1,5 +1,6 @@
 (ns dactyl-keyboard.hand
-  (:refer-clojure :exclude [use import])
+  (:refer-clojure :exclude
+                  [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]

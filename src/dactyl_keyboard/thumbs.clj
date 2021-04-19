@@ -14,7 +14,8 @@
 ;;;;;;;;;;;;
 
 (def thumborigin
-  (map + (key-position 1 cornerrow [(+ (/ mount-width 2) 14) (+ (- (/ mount-height 3)) -1) 2])
+  (map +
+       (key-position 1 cornerrow [(+ (/ mount-width 2) 14) (+ (- (/ mount-height 3)) -1) 2])
        thumb-offsets))
 (def thumb-tip-origin (map + thumborigin thumb-tip-offset))
 

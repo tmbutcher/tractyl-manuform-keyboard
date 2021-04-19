@@ -1,5 +1,6 @@
 (ns dactyl-keyboard.hotswap
-  (:refer-clojure :exclude [use import])
+  (:refer-clojure :exclude
+                  [use import])
   (:require [clojure.core.matrix :refer [array matrix mmul]]
             [scad-clj.scad :refer :all]
             [scad-clj.model :refer :all]
@@ -20,8 +21,8 @@
                  (union
                   (translate [(/ width -2) -0.4 0] (cube width 2.5 height))
                   (translate
-                    [(+ (* 0.866 socket-distance) (/ width 2)) (* -0.5 socket-distance) 0]
-                    (cube width 2.5 height)))
+                   [(+ (* 0.866 socket-distance) (/ width 2)) (* -0.5 socket-distance) 0]
+                   (cube width 2.5 height)))
                  nil)))))
 
 (def official-hotswap-clamp
@@ -33,10 +34,11 @@
               (->>
                (cube 2 5 2)
                (translate
-                 [(+ (/ (* 0.866 socket-distance) 2) 0.5)
-                  (+ (/ (* 0.5 socket-distance) -1) 2)
-                  2.5])
+                [(+ (/ (* 0.866 socket-distance) 2) 0.5)
+                 (+ (/ (* 0.5 socket-distance) -1) 2)
+                 2.5])
                (rotate (deg2rad -30) [0 0 1])))))
+
 ;
 ;(def single-plate-with-hotswap (difference
 ;                                (translate [0 2 (/ plate-thickness 2)] (cube (+ keyswitch-width 4) (+ keyswitch-height 7) 3))
