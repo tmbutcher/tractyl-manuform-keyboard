@@ -10,7 +10,7 @@
             [dactyl-keyboard.thumbs :refer :all]
             [dactyl-keyboard.dactyl :refer [model-right]]
             [dactyl-keyboard.bottom-plate :refer [right-plate]]
-            [dactyl-keyboard.hotswap-mesh :refer [hotswap-mesh]]
+            [dactyl-keyboard.hotswap-mesh :refer [thumb-hotswap-mesh hotswap-mesh]]
             [dactyl-keyboard.placement :refer [key-place]]
             [dactyl-keyboard.hand :refer [hand]]
             [dactyl-keyboard.trackball :refer :all]))
@@ -82,12 +82,15 @@
         (union
          ;         hand-on-test
          (color [220/255 120/255 120/255 1] hotswap-mesh)
+         (color [220/255 120/255 120/255 1] thumb-hotswap-mesh)
+
          (color [220/255 163/255 163/255 1] right-plate)
-         model-right
+         model-right)
          ;         (translate (map + palm-hole-origin [0 (+ buckle-length 3) (/ buckle-height 2)])
          ;                    (palm-rest-hole-rotate palm-rest))
          ;         (if trackball-enabled (translate trackball-origin test-ball) nil)
          ;         thumbcaps
          ;         caps)
+
 
          (translate [0 0 -20] (cube 350 350 40)))))

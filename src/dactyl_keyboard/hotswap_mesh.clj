@@ -12,13 +12,15 @@
             [dactyl-keyboard.utils :refer [deg2rad]]
             [dactyl-keyboard.hotswap :refer [official-hotswap-clamp]]
             [dactyl-keyboard.screws :refer [screw-insert-shape]]
-            [dactyl-keyboard.dactyl :refer [model-right]]))
+            [dactyl-keyboard.dactyl :refer [model-right]]
+            [dactyl-keyboard.trackball :refer [trackball-mount-translated-to-model]]))
 
 ;;;;;;;;;;;;;
 ;; Hotswap ;;
 ;;;;;;;;;;;;;
 
-(def hotswap-connector (translate [0 3 -2] (cube 2 6 2)))
+(def hotswap-connector (translate [0 3 -3] (cube 2 6 2)))
+(def bottom-hotswap-connector (rotate (deg2rad 180) [0 0 1] hotswap-connector))
 
 (defn connector-place [column row hotswap hotswap-connector]
   (if (and
@@ -37,14 +39,26 @@
          (hull bottom bottom-next-row))))))
 
 (defn thumb-hotswap-place [hotswap]
-  (let [top-hotswap              (rotate (deg2rad 180) [0 0 1] hotswap)
-        bottom-hotswap-connector (rotate (deg2rad 180) [0 0 1] hotswap-connector)]
+  (let [top-hotswap              (rotate (deg2rad 180) [0 0 1] hotswap)]
     (union
-     (thumb-mr-place (if trackball-enabled top-hotswap hotswap))
-     (thumb-br-place hotswap)
-     (if trackball-enabled nil (thumb-tl-place top-hotswap))
-     (thumb-bl-place top-hotswap)
-     (thumb-tr-place top-hotswap))))
+     (thumb-mr-place hotswap)
+     (thumb-br-place top-hotswap)
+     (if trackball-enabled nil (thumb-tl-place hotswap))
+     (thumb-bl-place hotswap)
+     (thumb-tr-place hotswap))))
+
+(def thumb-hotswap-mesh-connectors
+  (if trackball-enabled
+    (union
+     (hull (thumb-mr-place bottom-hotswap-connector) (thumb-tr-place bottom-hotswap-connector))
+     (hull (thumb-mr-place bottom-hotswap-connector) (thumb-bl-place bottom-hotswap-connector))
+     (hull (thumb-bl-place bottom-hotswap-connector) (thumb-br-place hotswap-connector)))
+    (union
+     (hull (thumb-tl-place bottom-hotswap-connector) (thumb-tr-place bottom-hotswap-connector))
+     (hull (thumb-tl-place bottom-hotswap-connector) (thumb-bl-place bottom-hotswap-connector))
+     (hull (thumb-tl-place bottom-hotswap-connector) (thumb-mr-place hotswap-connector))
+     (hull (thumb-mr-place hotswap-connector) (thumb-br-place hotswap-connector))
+     (hull (thumb-bl-place bottom-hotswap-connector) (thumb-br-place hotswap-connector)))))
 
 (defn hotswap-place [hotswap]
   (let [top-hotswap              (rotate (deg2rad 180) [0 0 1] hotswap)
@@ -96,11 +110,24 @@
      (hotswap-screw-place hollow-out)
      (hotswap-screw-place hotswap-screw-hole))))
 
+(def thumb-hotswap-screw-holders (cube 1 1 1))
+
 (def hotswap-mesh
   (difference
    (union
     hotswap-mesh
     hotswap-screw-holders)
+   (translate [0 0 -20] (cube 350 350 40)) ; Make sure it doesn't go below the ground
    model-right))
 
+(def thumb-hotswap-mesh
+  (difference
+   (union
+    thumb-hotswap-mesh
+    thumb-hotswap-mesh-connectors
+    thumb-hotswap-screw-holders)))
+;   model-right
+;   trackball-mount-translated-to-model))
+
 (spit "things/hotswap-mesh.scad" (write-scad hotswap-mesh))
+(spit "things/thumb-hotswatch-mesh.scad" (write-scad thumb-hotswap-mesh))

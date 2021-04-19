@@ -66,11 +66,17 @@
   (difference
    (union
     (sphere (/ outer-width 2)) ; Main cup sphere
-    (translate [0, 0, (/ vertical-hold 2)] (cylinder (/ outer-width 2) vertical-hold)) ; add a little extra to hold ball in)
+    ; add a little extra to hold ball in
+    (translate [0, 0, (/ vertical-hold 2)] (cylinder (/ outer-width 2) vertical-hold)))
+
    (sphere (/ trackball-width-plus-bearing 2))
+
+   ; cut out the upper part of the main cup sphere
    (translate [0, 0, (+ (/ outer-width 2) vertical-hold)]
-              (cylinder (/ outer-width 2) outer-width))
-   ; cut out the upper part of the main cup spher))
+              (cylinder (/ outer-width 2) outer-width))))
+
+
+
 
 ; We know the ball will sit approx bearing-protrude over the sensor holder. Eliminate the bottom and make it square
 ; up to that point with trim
@@ -159,7 +165,7 @@
   (->> p
        (trackball-mount-rotate)
        ;                       (rotate (deg2rad 0) [0 1 0])
-       (rotate (deg2rad 20) [0 0 1])
+       (rotate (deg2rad 20) [0 0 1])))
        ;                         (rotate (deg2rad -40) [1 0 0])))
 
 (def filler-half-circle
@@ -169,7 +175,7 @@
      (translate [0 0 (+ (/ outer-width 2) vertical-hold)]
                 (cylinder (/ outer-width 2) outer-width))
      ; cut out the upper part of the main cup spher)
-    (translate [0 0 trackball-raise])
+    (translate [0 0 trackball-raise]))
     filler-rotate))
 
 (def trackball-mount
@@ -186,12 +192,14 @@
 
 (def raised-trackball
   (translate [0 0 trackball-raise] (sphere (+ (/ trackball-width 2) 0.5))))
+
 (def trackball-origin (map + thumb-tip-origin [-8.5 10 -5]))
 
 (def test-holder
   (difference
    cup
    holder-negatives))
+
 (def test-ball (sphere (/ trackball-width 2)))
 
 (def test-holder-with-ball

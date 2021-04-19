@@ -72,8 +72,7 @@
              (key-place lastcol row web-post-br)
              (key-place lastcol row wide-post-br)
              (key-place lastcol (inc row) web-post-tr)
-             (key-place lastcol (inc row) wide-post-tr)))
-          ;;)))
+             (key-place lastcol (inc row) wide-post-tr))))))
 
 (def pinky-walls
   (union
@@ -116,11 +115,11 @@
        (include "../nutsnbolts/cyl_head_bolt.scad")
        (union
         model-right
-        ;                                       (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
-        ;                                       (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
-        ;                                       (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
-        ;                                       (translate (key-position 4 0 [-10 24 0]) (cube 80 32 200))
-        ;                                       (translate (key-position 4 3 [0 0 0]) (cube 80 40 200)))))
+        (translate (key-position 0 1 [-20 20 0]) (cube 49 70 200))
+        (translate (key-position 3 3 [10 10 0]) (cube 60 30 200))
+        (translate (key-position 2 2 [14 -4 0]) (cube 41 28 200))
+        (translate (key-position 4 0 [-10 24 0]) (cube 80 32 200))
+        (translate (key-position 4 3 [0 0 0]) (cube 80 40 200)))))
 
 (defn -main [dum] 1)
 

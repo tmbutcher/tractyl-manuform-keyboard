@@ -81,7 +81,7 @@
    (translate [0 0 -22] (cube 350 350 40))
    usb-jack
    trrs-holder-hole
-   model-right ; Just rm the whole model-right to make sure there's no obstruction))
+   model-right)) ; Just rm the whole model-right to make sure there's no obstruction))
 
 (spit "things/right-plate.scad"
       (write-scad
