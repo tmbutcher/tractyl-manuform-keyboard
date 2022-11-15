@@ -12,26 +12,26 @@
 ;; Shape parameters ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-(def nrows 4)
-(def ncols 5)
+(def nrows 5)
+(def ncols 6)
 (def trackball-enabled true)
 (def printed-hotswap? true) ; Whether you want the 3d printed version of the hotswap or you ordered some from krepublic
 
 (def α (/ π 8))                        ; curvature of the columns
 (def β (/ π 26))                        ; curvature of the rows
-(def centerrow (- nrows 2.5))             ; controls front-back tilt
+(def centerrow (- nrows 3))             ; controls front-back tilt
 (def centercol 2)                       ; controls left-right tilt / tenting (higher number is more tenting)
 (def tenting-angle (deg2rad 20))            ; or, change this for more precise tenting control
-(def column-style
-  (if (> nrows 5) :orthographic :standard))  ; options include :standard, :orthographic, and :fixed
-; (def column-style :fixed)
+;; (def column-style
+;;   (if (> nrows 5) :orthographic :standard))  ; options include :standard, :orthographic, and :fixed
+(def column-style :orthographic)
 (def pinky-15u false)
 
 (defn column-offset [column] (cond
                                (= column 2) [0 2.82 -4.5]
                                (= column 3) [0 -1 -4]
                                (>= column 4) [0 -16 -5.50]            ; original [0 -5.8 5.64]
-                               :else [0 -5 1.5]))
+                               :else [-3 -5 1.5]))
 
 (def thumb-offsets [6 0 10])
 
@@ -74,7 +74,7 @@
 (def keyswitch-height 14.2) ;; Was 14.1, then 14.25
 (def keyswitch-width 14.2)
 
-(def sa-profile-key-height 12.7)
+(def sa-profile-key-height 7) ; 12.7)
 
 (def plate-thickness 3)
 (def side-nub-thickness 4)
@@ -121,7 +121,7 @@
 ;; SA Keycaps ;;
 ;;;;;;;;;;;;;;;;
 
-(def sa-length 18.25)
+(def sa-length  18.25)
 (def sa-double-length 37.5)
 (def sa-cap {1 (let [bl2 (/ 18.5 2)
                      m (/ 17 2)
@@ -151,6 +151,42 @@
                       (->> key-cap
                            (translate [0 0 (+ 5 plate-thickness)])
                            (color [240/255 223/255 175/255 1])))})
+
+
+;;;;;;;;;;;;;;;;;
+;; MBK Keycaps ;; (added by TMB)
+;;;;;;;;;;;;;;;;;
+
+;; (def sa-length  10)
+;; (def sa-double-length 20)
+;; (def sa-cap {1 (let [bl2 (/ 10 2)
+;;                      m (/ 8.5 2)
+;;                      key-cap (cube 10 10 2)]
+;;                     (->> key-cap
+;;                          (translate [0 0 (+ 4 plate-thickness)])
+;;                          (color [220/255 163/255 163/255 1])))
+;;              2 (let [bl2 sa-length
+;;                      bw2 (/ 10 2)
+;;                      key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
+;;                                         (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+;;                                         (translate [0 0 0.05]))
+;;                                    (->> (polygon [[6 16] [6 -16] [-6 -16] [-6 16]])
+;;                                         (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+;;                                         (translate [0 0 12])))]
+;;                     (->> key-cap
+;;                          (translate [0 0 (+ 5 plate-thickness)])
+;;                          (color [127/255 159/255 127/255 1])))
+;;              1.5 (let [bl2 (/ 10 2)
+;;                        bw2 (/ 27.94 2)
+;;                        key-cap (hull (->> (polygon [[bw2 bl2] [bw2 (- bl2)] [(- bw2) (- bl2)] [(- bw2) bl2]])
+;;                                           (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+;;                                           (translate [0 0 0.05]))
+;;                                      (->> (polygon [[11 6] [-11 6] [-11 -6] [11 -6]])
+;;                                           (extrude-linear {:height 0.1 :twist 0 :convexity 0})
+;;                                           (translate [0 0 12])))]
+;;                       (->> key-cap
+;;                            (translate [0 0 (+ 5 plate-thickness)])
+;;                            (color [240/255 223/255 175/255 1])))})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Placement Functions ;;
@@ -590,16 +626,28 @@
 
 (def fingers
   ;; Move over by half the width of index finger to half index finger at 0 on x
+  ;; (translate [10.5 0 0]
+  ;;            (union
+  ;;              ;; Index
+  ;;              (finger 47 22 20 10.5)
+  ;;              ;; Middle
+  ;;              (translate [25.5 0 0] (finger 53.5 29 22 9.2))
+  ;;              ;; Ring
+  ;;              (translate [(+ 20 25.5) 0 0] (finger 44 28.5 23 8.25))
+  ;;              ;; Pinky
+  ;;              (translate [(+ 20 25.5 22) 0 0] (finger 30 22.5 20 8.25))))
+  ;; )
+
   (translate [10.5 0 0]
              (union
                ;; Index
-               (finger 47 22 20 10.5)
+               (finger 53 30 28 10.5)
                ;; Middle
-               (translate [25.5 0 0] (finger 53.5 29 22 9.2))
+               (translate [25.5 0 0] (finger 60 38 30 9.2))
                ;; Ring
-               (translate [(+ 20 25.5) 0 0] (finger 44 28.5 23 8.25))
+               (translate [(+ 20 25.5) 0 0] (finger 56 40 30 8.25))
                ;; Pinky
-               (translate [(+ 20 25.5 22) 0 0] (finger 30 22.5 20 8.25))))
+               (translate [(+ 20 25.5 22) 0 0] (finger 47 28 28 8.25))))
   )
 
 (def palm
